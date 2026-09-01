@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotter — AI Voice Training Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0E0F0A;
+            --surface: #171810;
+            --surface-2: #222417;
+            --card-glass: rgba(23, 24, 16, 0.85);
+            --line: rgba(242, 240, 228, 0.12);
+            --text: #F2F0E4;
+            --muted: #9A9A87;
+            --volt: #D4FF3F;
+            --volt-glow: rgba(212, 255, 63, 0.4);
+            --coral: #FF6A4D;
+            --cyan: #06B6D4;
+            --purple: #8B5CF6;
+            --pink: #EC4899;
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(circle at 50% 15%, #1c2010 0%, #0E0F0A 65%, #070805 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle film grain texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.04;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* Server status banner */
+        #serverBanner {
+            display: none;
+            width: 100%;
+            background: var(--coral);
+            color: var(--ink);
+            padding: 10px 20px;
+            font-size: 13.5px;
+            font-weight: 700;
+            text-align: center;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* Top Navigation */
+        nav {
+            width: 100%;
+            max-width: 1080px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        .wordmark {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--text);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .mode-pills {
+            display: flex;
+            gap: 8px;
+            background: var(--surface-2);
+            padding: 4px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+        }
+
+        .pill-btn {
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+
+        .pill-btn.active {
+            background: var(--volt);
+            color: var(--ink);
+            box-shadow: 0 4px 12px rgba(212, 255, 63, 0.25);
+        }
+
+        @media (max-width: 520px) {
+            nav { flex-direction: column; gap: 12px; align-items: flex-start; }
+            .mode-pills { width: 100%; justify-content: center; flex-wrap: wrap; }
+            .pill-btn { font-size: 11.5px; padding: 7px 12px; }
+            .shop-cta { flex-direction: column; text-align: center; }
+        }
+
+        /* Container */
+        .main-container {
+            width: 100%;
+            max-width: 1080px;
+            padding: 12px 20px 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ──────────────────────────────────────────────────────────
+           VOICE ASSISTANT CARD (Primary Experience)
+        ────────────────────────────────────────────────────────── */
+        .voice-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--card-glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--line);
+            border-top: 3px solid var(--volt);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(212, 255, 63, 0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Header inside card */
+        .card-header {
+            padding: 1.1rem 1.4rem 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .header-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            background: var(--volt);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--volt);
+            animation: live-blink 2s infinite ease-in-out;
+        }
+
+        @keyframes live-blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .app-name {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: #FFFFFF;
+        }
+
+        .app-badge {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            background: rgba(212, 255, 63, 0.12);
+            color: var(--volt);
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid rgba(212, 255, 63, 0.3);
+        }
+
+        /* Avatar Stage (Siri Fluid Morphing Orb) */
+        .avatar-stage {
+            padding: 2.2rem 1.2rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .siri-orb-container {
+            position: relative;
+            width: 175px;
+            height: 175px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Ambient background glow */
+        .siri-glow {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--volt), var(--cyan), var(--purple));
+            filter: blur(38px);
+            opacity: 0.35;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slow-rotate 12s linear infinite;
+        }
+
+        /* Primary Siri Fluid Morphing Sphere */
+        .siri-orb {
+            position: relative;
+            width: 128px;
+            height: 128px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 180deg at 50% 50%,
+                #D4FF3F 0deg,
+                #06B6D4 72deg,
+                #8B5CF6 144deg,
+                #FF6A4D 216deg,
+                #10B981 288deg,
+                #D4FF3F 360deg
+            );
+            filter: blur(1.5px);
+            box-shadow: inset 0 0 22px rgba(255, 255, 255, 0.85),
+                        0 0 35px rgba(212, 255, 63, 0.4),
+                        0 0 65px rgba(6, 182, 212, 0.25);
+            transition: all 0.4s ease-out;
+            animation: fluid-idle 6s ease-in-out infinite alternate;
+        }
+
+        /* Inner reflective 3D layer */
+        .siri-orb::after {
+            content: '';
+            position: absolute;
+            inset: 6px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.1) 40%, rgba(0, 0, 0, 0.6) 80%);
+            mix-blend-mode: overlay;
+        }
+
+        /* Ripple ring */
+        .siri-ring {
+            position: absolute;
+            inset: -14px;
+            border-radius: 50%;
+            border: 2px solid rgba(212, 255, 63, 0.35);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        /* ─── State: LISTENING ─── */
+        .state-listening .siri-glow {
+            opacity: 0.9;
+            filter: blur(45px);
+            transform: scale(1.4);
+            background: radial-gradient(circle, #D4FF3F, #06B6D4, #10B981);
+        }
+        .state-listening .siri-orb {
+            transform: scale(1.14);
+            animation: fluid-listening 1.8s ease-in-out infinite alternate;
+            box-shadow: inset 0 0 28px rgba(255, 255, 255, 1),
+                        0 0 50px rgba(212, 255, 63, 0.85),
+                        0 0 85px rgba(6, 182, 212, 0.55);
+        }
+        .state-listening .siri-ring {
+            opacity: 0.85;
+            animation: ripple-ring 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        }
+
+        /* ─── State: THINKING ─── */
+        .state-thinking .siri-glow {
+            opacity: 0.75;
+            background: radial-gradient(circle, #8B5CF6, #EC4899, #FF6A4D);
+            transform: scale(1.15);
+        }
+        .state-thinking .siri-orb {
+            animation: fluid-spin 1.4s linear infinite;
+            filter: blur(2.5px);
+        }
+
+        /* ─── State: SPEAKING ─── */
+        .state-speaking .siri-glow {
+            opacity: 0.95;
+            filter: blur(48px);
+            transform: scale(1.45);
+            background: radial-gradient(circle, #D4FF3F, #FF6A4D, #8B5CF6);
+        }
+        .state-speaking .siri-orb {
+            animation: fluid-speaking 0.75s ease-in-out infinite alternate;
+            box-shadow: inset 0 0 32px rgba(255, 255, 255, 1),
+                        0 0 55px rgba(212, 255, 63, 0.8),
+                        0 0 95px rgba(255, 106, 77, 0.6);
+        }
+
+        /* Fluid morph animations */
+        @keyframes fluid-idle {
+            0% { transform: scale(1) rotate(0deg); border-radius: 50%; }
+            50% { transform: scale(1.03) rotate(180deg); border-radius: 46% 54% 52% 48% / 54% 48% 52% 46%; }
+            100% { transform: scale(0.97) rotate(360deg); border-radius: 52% 48% 46% 54% / 48% 52% 48% 52%; }
+        }
+
+        @keyframes fluid-listening {
+            0% { transform: scale(1.06) rotate(0deg); border-radius: 42% 58% 50% 50% / 55% 45% 55% 45%; }
+            50% { transform: scale(1.2) rotate(120deg); border-radius: 58% 42% 55% 45% / 45% 55% 45% 55%; }
+            100% { transform: scale(1.12) rotate(240deg); border-radius: 48% 52% 42% 58% / 52% 48% 58% 42%; }
+        }
+
+        @keyframes fluid-speaking {
+            0% { transform: scale(1.06) rotate(0deg); border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%; }
+            100% { transform: scale(1.24) rotate(180deg); border-radius: 60% 40% 40% 60% / 40% 60% 40% 60%; }
+        }
+
+        @keyframes fluid-spin {
+            0% { transform: rotate(0deg) scale(1); }
+            100% { transform: rotate(360deg) scale(1.08); }
+        }
+
+        @keyframes slow-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes ripple-ring {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1.55); opacity: 0; }
+        }
+
+        /* Status typography */
+        .status-heading {
+            margin-top: 1.25rem;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+
+        .status-sub {
+            margin-top: 0.25rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Animated Sound Waveform Bars */
+        .waveform {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            height: 22px;
+            margin-top: 0.65rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .waveform.active { opacity: 1; }
+        .waveform-bar {
+            width: 3.5px;
+            background: linear-gradient(to top, var(--volt), var(--coral));
+            border-radius: 999px;
+            animation: wave-bar 0.9s infinite ease-in-out alternate;
+        }
+        .waveform-bar:nth-child(1) { height: 8px; animation-delay: 0.1s; }
+        .waveform-bar:nth-child(2) { height: 18px; animation-delay: 0.25s; }
+        .waveform-bar:nth-child(3) { height: 12px; animation-delay: 0.4s; }
+        .waveform-bar:nth-child(4) { height: 22px; animation-delay: 0.15s; }
+        .waveform-bar:nth-child(5) { height: 10px; animation-delay: 0.3s; }
+        .waveform-bar:nth-child(6) { height: 16px; animation-delay: 0.2s; }
+        .waveform-bar:nth-child(7) { height: 7px; animation-delay: 0.35s; }
+
+        @keyframes wave-bar {
+            0% { transform: scaleY(0.25); opacity: 0.4; }
+            100% { transform: scaleY(1); opacity: 1; }
+        }
+
+        /* Conversation Panel */
+        .conversation-panel {
+            flex: 1;
+            max-height: 200px;
+            min-height: 150px;
+            overflow-y: auto;
+            padding: 1rem 1.25rem;
+            background: rgba(14, 15, 10, 0.55);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            scroll-behavior: smooth;
+        }
+
+        .conversation-panel::-webkit-scrollbar { width: 4px; }
+        .conversation-panel::-webkit-scrollbar-thumb { background: rgba(212, 255, 63, 0.2); border-radius: 999px; }
+
+        .msg-bubble {
+            padding: 0.7rem 1rem;
+            border-radius: 1.25rem;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            max-width: 86%;
+            animation: fade-in 0.25s ease-out;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-bubble.user {
+            align-self: flex-end;
+            background: rgba(212, 255, 63, 0.16);
+            color: var(--volt);
+            border: 1px solid rgba(212, 255, 63, 0.3);
+            border-bottom-right-radius: 0.3rem;
+        }
+
+        .msg-bubble.ai {
+            align-self: flex-start;
+            background: rgba(242, 240, 228, 0.08);
+            color: #F8FAFC;
+            border-bottom-left-radius: 0.3rem;
+            border: 1px solid rgba(242, 240, 228, 0.08);
+        }
+
+        /* Voice Suggested Prompts */
+        .quick-cues {
+            padding: 0.75rem 1.25rem 0.25rem;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .quick-cues::-webkit-scrollbar { display: none; }
+        .cue-chip {
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 999px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cue-chip:hover {
+            border-color: var(--volt);
+            color: var(--volt);
+        }
+
+        /* Bottom Controls */
+        .bottom-action-bar {
+            padding: 1rem 1.25rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 0.95rem 1.5rem;
+            border: none;
+            border-radius: 1rem;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .action-button.start {
+            background: var(--volt);
+            color: var(--ink);
+            box-shadow: 0 10px 25px -5px var(--volt-glow);
+        }
+
+        .action-button.start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px -5px var(--volt-glow);
+        }
+
+        .action-button.stop {
+            background: rgba(255, 106, 77, 0.15);
+            color: var(--coral);
+            border: 1px solid rgba(255, 106, 77, 0.35);
+        }
+
+        .action-button.stop:hover {
+            background: rgba(255, 106, 77, 0.25);
+        }
+
+        .action-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Text Input Fallback Bar */
+        .text-input-row {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+        }
+        .text-input-row input {
+            flex: 1;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .text-input-row input:focus {
+            outline: 1px solid var(--volt);
+        }
+        .text-input-row button {
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            color: var(--volt);
+            padding: 0 16px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        /* ──────────────────────────────────────────────────────────
+           WORKOUT & TOOLS DRAWER (Tabs)
+        ────────────────────────────────────────────────────────── */
+        .tools-view {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            gap: 24px;
+            grid-template-columns: 1fr 1fr;
+            margin-top: 1rem;
+        }
+        .tools-view.active {
+            display: grid;
+        }
+
+        @media (max-width: 768px) {
+            .tools-view { grid-template-columns: 1fr; }
+        }
+
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-top: 3px solid var(--volt);
+            border-radius: var(--radius-md);
+            padding: 22px;
+        }
+
+        .tool-card h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.15rem;
+            margin-bottom: 14px;
+            letter-spacing: 0.03em;
+        }
+
+        .field-row { display: flex; gap: 10px; margin-bottom: 12px; }
+        .field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 12px; color: var(--muted); }
+        .field select, .field input[type=number] {
+            background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
+            padding: 10px 12px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px;
+        }
+
+        .rpe-row { margin: 12px 0 16px; }
+        .rpe-row label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+        .rpe-row input[type=range] { width: 100%; accent-color: var(--coral); }
+        .rpe-val { font-family: 'Oswald'; font-size: 20px; color: var(--coral); }
+
+        .log-btn {
+            width: 100%; background: var(--volt); color: var(--ink); border: none;
+            font-family: inherit; font-weight: 700; font-size: 14px;
+            padding: 12px; border-radius: var(--radius-sm); cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .log-btn:hover { transform: translateY(-1px); }
+
+        .session-list { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
+        .session-item {
+            display: flex; justify-content: space-between; font-size: 13px;
+            padding: 7px 10px; background: var(--surface-2); border-radius: var(--radius-sm);
+        }
+        .session-item .rpe { color: var(--coral); font-family: 'Oswald'; font-weight: 600; }
+
+        .timer-display { text-align: center; padding: 14px 0 6px; }
+        .timer-num { font-family: 'Oswald'; font-size: 56px; color: var(--volt); font-variant-numeric: tabular-nums; }
+        .timer-cue { min-height: 20px; font-size: 13px; color: var(--muted); margin-top: 4px; }
+        .timer-btns { display: flex; gap: 10px; margin-top: 14px; }
+        .timer-btns button {
+            flex: 1; padding: 11px; border-radius: var(--radius-sm); cursor: pointer;
+            font-family: inherit; font-weight: 700; font-size: 13.5px; border: none;
+        }
+        .timer-start { background: var(--volt); color: var(--ink); }
+        .timer-reset { background: transparent; border: 1px solid var(--line) !important; color: var(--text); }
+
+        /* Media Card Inside Chat */
+        .media-card {
+            background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 4px;
+        }
+        .media-card .media-title { font-size: 12px; font-weight: 700; color: var(--volt); margin-bottom: 4px; }
+        .media-card ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--text); }
+
+        /* Disclaimer */
+        .disclaimer {
+            font-size: 0.72rem;
+            color: rgba(154, 154, 135, 0.6);
+            text-align: center;
+            line-height: 1.4;
+            margin-top: 1rem;
+        }
+
+        /* ──────────────────────────────────────────────────────────
+           NUTRITION SECTION
+        ────────────────────────────────────────────────────────── */
+        .nutrition-view {
+            display: none;
+            width: 100%;
+            max-width: 720px;
+            margin-top: 0.5rem;
+            animation: fadeUp 0.35s ease;
+        }
+        .nutrition-view.active { display: block; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nutrition-hero {
+            text-align: center;
+            padding: 28px 20px 24px;
+            background: linear-gradient(135deg, rgba(212,255,63,0.08) 0%, rgba(6,182,212,0.06) 50%, rgba(139,92,246,0.06) 100%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .nutrition-hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(212,255,63,0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .nutrition-hero-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 12px rgba(212,255,63,0.3));
+        }
+        .nutrition-hero h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.65rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, var(--text) 0%, var(--volt) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .nutrition-hero p {
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 600px) {
+            .nutrition-grid { grid-template-columns: 1fr; }
+        }
+
+        .nutrition-card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            padding: 18px 16px;
+            transition: border-color 0.25s, transform 0.2s;
+        }
+        .nutrition-card:hover {
+            border-color: rgba(212,255,63,0.25);
+            transform: translateY(-2px);
+        }
+        .nutrition-card.span-full { grid-column: 1 / -1; }
+
+        .nutrition-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .nutrition-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .nutrition-card-icon.diet { background: rgba(212,255,63,0.12); }
+        .nutrition-card-icon.macros { background: rgba(6,182,212,0.12); }
+        .nutrition-card-icon.supps { background: rgba(139,92,246,0.12); }
+        .nutrition-card-icon.hydration { background: rgba(236,72,153,0.12); }
+
+        .nutrition-card h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        .nutrition-card ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .nutrition-card li {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.45;
+            padding-left: 14px;
+            position: relative;
+        }
+        .nutrition-card li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 7px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--volt);
+            opacity: 0.7;
+        }
+
+        .macro-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .macro-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--surface-2);
+        }
+        .macro-pill.protein { color: var(--coral); border-color: rgba(255,106,77,0.3); }
+        .macro-pill.carbs { color: var(--cyan); border-color: rgba(6,182,212,0.3); }
+        .macro-pill.fats { color: var(--purple); border-color: rgba(139,92,246,0.3); }
+
+        .shop-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 22px;
+            background: linear-gradient(135deg, rgba(212,255,63,0.1) 0%, rgba(212,255,63,0.03) 100%);
+            border: 1px solid rgba(212,255,63,0.25);
+            border-radius: var(--radius-md);
+            margin-top: 16px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.25s ease;
+        }
+        .shop-cta:hover {
+            border-color: var(--volt);
+            box-shadow: 0 8px 24px rgba(212,255,63,0.12);
+            transform: translateY(-2px);
+        }
+        .shop-cta-text h4 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .shop-cta-text p {
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        .shop-cta-btn {
+            flex-shrink: 0;
+            background: var(--volt);
+            color: var(--ink);
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 0.82rem;
+            padding: 11px 18px;
+            border-radius: 999px;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: box-shadow 0.2s;
+        }
+        .shop-cta:hover .shop-cta-btn {
+            box-shadow: 0 4px 16px rgba(212,255,63,0.35);
+        }
+
+        .nutrition-voice-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(154,154,135,0.7);
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+        .nutrition-voice-hint span { color: var(--volt); font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="serverBanner"></div>
+
+<nav>
+    <div class="wordmark" onclick="location.reload()">
+        <svg width="24" height="24" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="none" stroke="#D4FF3F" stroke-width="2.2"/><circle cx="13" cy="13" r="4.5" fill="#D4FF3F"/></svg>
+        Spotter
+    </div>
+
+    <div class="mode-pills">
+        <button class="pill-btn active" id="pillVoice" onclick="setAppMode('voice')">
+            🎙️ Voice Avatar
+        </button>
+        <button class="pill-btn" id="pillTools" onclick="setAppMode('tools')">
+            📊 Workout & Timer
+        </button>
+        <button class="pill-btn" id="pillNutrition" onclick="setAppMode('nutrition')">
+            🥗 Nutrition
+        </button>
+    </div>
+</nav>
+
+<div class="main-container">
+
+    <!-- ──────────────────────────────────────────────────────────
+         VOICE ASSISTANT CARD
+    ────────────────────────────────────────────────────────── -->
+    <div class="voice-card" id="voiceCard">
+
+        <div class="card-header">
+            <div class="header-title-group">
+                <div class="pulse-dot"></div>
+                <span class="app-name">Spotter Voice Coach</span>
+            </div>
+            <div class="app-badge" id="aiModelBadge">Groq • GPT-OSS 120B</div>
+        </div>
+
+        <!-- Siri Fluid Avatar Stage -->
+        <div class="avatar-stage">
+            <div class="siri-orb-container" id="orbClickTarget" title="Click to talk or interrupt">
+                <div class="siri-glow"></div>
+                <div class="siri-orb" id="siriOrb"></div>
+                <div class="siri-ring"></div>
+            </div>
+
+            <div class="waveform" id="waveform">
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+                <div class="waveform-bar"></div>
+            </div>
+
+            <div class="status-heading" id="statusHeading">Tap "Start Voice Assistant"</div>
+            <div class="status-sub" id="statusSub">Hands-free voice coaching • Speaks back out loud</div>
+        </div>
+
+        <!-- Live Quick Suggestions -->
+        <div class="quick-cues">
+            <button class="cue-chip" onclick="speakQuickCue('My knees ache a bit on squats today')">🦵 Knees ache on squats</button>
+            <button class="cue-chip" onclick="speakQuickCue('Show me proper barbell squat form')">🏋️ Squat form cues</button>
+            <button class="cue-chip" onclick="speakQuickCue('I only have 20 minutes to workout today')">⏱️ 20-min express routine</button>
+            <button class="cue-chip" onclick="speakQuickCue('What supplements actually help with training?')">💊 Best supplements</button>
+            <button class="cue-chip" onclick="speakQuickCue('How much protein should I eat to build muscle?')">🥩 Protein intake</button>
+            <button class="cue-chip" onclick="speakQuickCue('What should I eat before and after my workout?')">🍽️ Pre & post workout meals</button>
+            <button class="cue-chip" onclick="speakQuickCue('Start my 90-second rest timer')">⏳ Start rest timer</button>
+        </div>
+
+        <!-- Conversation Panel -->
+        <div class="conversation-panel" id="conversationPanel">
+            <div class="msg-bubble ai">
+                Hey! I'm Spotter, your hands-free voice coach. Hit "Start Voice Assistant" and talk to me naturally mid-workout — I'll answer and coach you back out loud!
+            </div>
+        </div>
+
+        <!-- Bottom Controls -->
+        <div class="bottom-action-bar">
+            <button class="action-button start" id="toggleBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span id="toggleBtnText">Start Voice Assistant</span>
+            </button>
+
+            <!-- Text input fallback -->
+            <div class="text-input-row">
+                <input id="chatTextInput" type="text" placeholder="Or type a question..." onkeydown="if(event.key==='Enter')sendTextMessage()">
+                <button onclick="sendTextMessage()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────
+         WORKOUT & TIMER DRAWER
+    ────────────────────────────────────────────────────────── -->
+    <div class="tools-view" id="toolsView">
+
+        <!-- Set Logger -->
+        <div class="tool-card">
+            <h3>Log Current Set</h3>
+            <div class="field-row">
+                <div class="field">
+                    <label for="ex-select">Exercise</label>
+                    <select id="ex-select">
+                        <option>Back squat</option>
+                        <option>Deadlift</option>
+                        <option>Bench press</option>
+                        <option>Push-up</option>
+                        <option>Barbell row</option>
+                        <option>Plank</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="reps-input">Reps</label>
+                    <input id="reps-input" type="number" min="1" max="50" value="8">
+                </div>
+            </div>
+            <div class="rpe-row">
+                <label>Effort (RPE) — <span class="rpe-val" id="rpe-val">7</span>/10</label>
+                <input id="rpe-slider" type="range" min="1" max="10" value="7" oninput="document.getElementById('rpe-val').textContent=this.value">
+            </div>
+            <button class="log-btn" onclick="logSet()">Log Set & Get Voice Cue</button>
+
+            <div class="session-list" id="session-list">
+                <div style="font-size:12.5px;color:var(--muted);padding:4px 0;">No sets logged yet today.</div>
+            </div>
+        </div>
+
+        <!-- Rest Timer -->
+        <div class="tool-card">
+            <h3>Rest Timer & Voice Cues</h3>
+            <div class="timer-display">
+                <div class="timer-num" id="timer-num">1:30</div>
+                <div class="timer-cue" id="timer-cue">Set your rest, then start.</div>
+            </div>
+            <div class="timer-btns">
+                <button class="timer-start" id="timer-btn" onclick="toggleTimer()">Start Rest</button>
+                <button class="timer-reset" onclick="resetTimer()">Reset</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────
+         NUTRITION SECTION
+    ────────────────────────────────────────────────────────── -->
+    <div class="nutrition-view" id="nutritionView">
+
+        <div class="nutrition-hero">
+            <div class="nutrition-hero-icon">🥗</div>
+            <h2>Fuel Your Performance</h2>
+            <p>Smart diet, nutrition & supplement guidance to power every rep</p>
+        </div>
+
+        <div class="nutrition-grid">
+
+            <div class="nutrition-card">
+                <div class="nutrition-card-header">
+                    <div class="nutrition-card-icon diet">🍽️</div>
+                    <h3>Diet Basics</h3>
+                </div>
+                <ul>
+                    <li>Eat whole foods — lean protein, complex carbs, healthy fats</li>
+                    <li>Time carbs around workouts for energy & recovery</li>
+                    <li>Prioritize 7–9 hrs sleep — recovery starts in the kitchen</li>
+                </ul>
+            </div>
+
+            <div class="nutrition-card">
+                <div class="nutrition-card-header">
+                    <div class="nutrition-card-icon macros">📊</div>
+                    <h3>Macros Guide</h3>
+                </div>
+                <div class="macro-pills">
+                    <span class="macro-pill protein">Protein 1.6–2.2g/kg</span>
+                    <span class="macro-pill carbs">Carbs 3–5g/kg</span>
+                    <span class="macro-pill fats">Fats 0.8–1g/kg</span>
+                </div>
+                <ul style="margin-top:10px">
+                    <li>Adjust based on goals — cut, maintain, or bulk</li>
+                    <li>Track for 2 weeks, then eat intuitively</li>
+                </ul>
+            </div>
+
+            <div class="nutrition-card">
+                <div class="nutrition-card-header">
+                    <div class="nutrition-card-icon hydration">💧</div>
+                    <h3>Hydration</h3>
+                </div>
+                <ul>
+                    <li>Drink 2.5–3.5 L water daily (more on training days)</li>
+                    <li>Add electrolytes during intense or long sessions</li>
+                    <li>Check urine color — pale yellow is the goal</li>
+                </ul>
+            </div>
+
+            <div class="nutrition-card">
+                <div class="nutrition-card-header">
+                    <div class="nutrition-card-icon supps">💊</div>
+                    <h3>Supplements</h3>
+                </div>
+                <ul>
+                    <li><strong style="color:var(--text)">Whey/Plant Protein</strong> — hit daily protein targets</li>
+                    <li><strong style="color:var(--text)">Creatine Monohydrate</strong> — 3–5g daily, well-researched</li>
+                    <li><strong style="color:var(--text)">Vitamin D + Omega-3</strong> — support recovery & joints</li>
+                    <li><strong style="color:var(--text)">Caffeine</strong> — pre-workout boost when needed</li>
+                </ul>
+            </div>
+
+            <div class="nutrition-card span-full">
+                <div class="nutrition-card-header">
+                    <div class="nutrition-card-icon diet">⚡</div>
+                    <h3>Meal Timing Tips</h3>
+                </div>
+                <ul>
+                    <li><strong style="color:var(--text)">Pre-workout (1–2 hrs):</strong> carbs + moderate protein — banana & Greek yogurt, oats & whey</li>
+                    <li><strong style="color:var(--text)">Post-workout (within 2 hrs):</strong> protein + fast carbs — chicken & rice, protein shake & fruit</li>
+                    <li><strong style="color:var(--text)">Rest days:</strong> slightly lower carbs, keep protein high for muscle repair</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <a class="shop-cta" href="https://www.amazon.com/s?k=whey+protein+supplements+fitness" target="_blank" rel="noopener noreferrer">
+            <div class="shop-cta-text">
+                <h4>Shop Protein & Supplements</h4>
+                <p>Curated picks for whey protein, creatine, vitamins & more — shipped fast.</p>
+            </div>
+            <span class="shop-cta-btn">
+                Visit Store
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+            </span>
+        </a>
+
+        <p class="nutrition-voice-hint">
+            Want personalized advice? Switch to <span onclick="setAppMode('voice')">Voice Avatar</span> and ask about your diet, macros, or supplements.
+        </p>
+
+    </div>
+
+    <p class="disclaimer">
+        Spotter provides athletic coaching & general fitness guidance. Not medical diagnosis. Consult a physician before new training programs or supplements.
+    </p>
+
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────────
+// STATE & DOM ELEMENTS
+// ──────────────────────────────────────────────────────────────────────────────
+const voiceCard         = document.getElementById('voiceCard');
+const siriOrb           = document.getElementById('siriOrb');
+const waveform          = document.getElementById('waveform');
+const statusHeading     = document.getElementById('statusHeading');
+const statusSub         = document.getElementById('statusSub');
+const conversationPanel = document.getElementById('conversationPanel');
+const toggleBtn         = document.getElementById('toggleBtn');
+const toggleBtnText     = document.getElementById('toggleBtnText');
+const orbClickTarget    = document.getElementById('orbClickTarget');
+const chatTextInput     = document.getElementById('chatTextInput');
+const serverBanner      = document.getElementById('serverBanner');
+
+let isSessionActive = false;
+let isRecognizing   = false;
+let isSpeaking      = false;
+let isProcessing    = false;
+let mediaStream     = null;
+let recognition     = null;
+let audioCtx        = null;
+
+// Multi-turn conversation context for Spotter
+let chatHistory = [
+    {
+        role: "system",
+        content: "You are Spotter, an elite, motivational, and energetic AI personal coach and training partner. You talk directly out loud to the user during workouts. You also give practical diet, nutrition, and supplement advice (protein intake, meal timing, creatine, hydration, etc.). Keep all responses concise, punchy, and conversational (1 to 2 sentences max). NEVER use markdown asterisks (*smiles* or *nods*), bullet points, or lists. Speak naturally, warmly, and with actionable training and nutrition advice."
+    }
+];
+
+const synth = window.speechSynthesis;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AUDIO CHIMES (Synthesized via Web Audio API for responsive feel)
+// ──────────────────────────────────────────────────────────────────────────────
+function playTone(type) {
+    try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'start') {
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        } else if (type === 'heard') {
+            osc.frequency.setValueAtTime(660, now);
+            osc.frequency.exponentialRampToValueAtTime(520, now + 0.1);
+            gain.gain.setValueAtTime(0.06, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        }
+    } catch (e) {}
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SPEECH RECOGNITION (Continuous Hands-Free Conversation Engine)
+// ──────────────────────────────────────────────────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false; // Managed in tight restart cycle for cross-browser stability
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        isRecognizing = true;
+        if (!isSpeaking && !isProcessing) {
+            setOrbState('listening', 'Listening… speak freely', 'Spotter will reply and listen again automatically');
+        }
+    };
+
+    recognition.onresult = async (event) => {
+        isRecognizing = false;
+        const transcript = event.results[0][0].transcript.trim();
+        if (transcript.length > 0) {
+            playTone('heard');
+            addMessage(transcript, 'user');
+            await processVoiceQuery(transcript);
+        } else {
+            restartListeningCycle();
+        }
+    };
+
+    recognition.onerror = (event) => {
+        isRecognizing = false;
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+            restartListeningCycle();
+        } else if (event.error === 'not-allowed') {
+            stopVoiceSession();
+            setOrbState('idle', 'Mic access denied', 'Please allow microphone permissions in browser settings');
+        } else {
+            restartListeningCycle();
+        }
+    };
+
+    recognition.onend = () => {
+        isRecognizing = false;
+        if (isSessionActive && !isSpeaking && !isProcessing) {
+            restartListeningCycle();
+        }
+    };
+} else {
+    toggleBtn.disabled = true;
+    setOrbState('idle', 'Browser Unsupported', 'Use Google Chrome or Microsoft Edge for voice support');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// HANDS-FREE VOICE LIFECYCLE
+// ──────────────────────────────────────────────────────────────────────────────
+async function startVoiceSession() {
+    try {
+        // Pre-acquire stream so browser asks once and never again
+        if (!mediaStream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+
+        isSessionActive = true;
+        toggleBtn.className = 'action-button stop';
+        toggleBtnText.textContent = 'End Voice Session';
+
+        playTone('start');
+        setOrbState('listening', 'Listening… say what you\'re training', 'Hands-free voice coaching active');
+        startListening();
+    } catch (err) {
+        console.error('Mic access error:', err);
+        setOrbState('idle', 'Microphone Required', 'Tap Start and click "Allow" when prompted.');
+    }
+}
+
+function stopVoiceSession() {
+    isSessionActive = false;
+    isSpeaking = false;
+    isProcessing = false;
+
+    if (synth) synth.cancel();
+    if (recognition) {
+        try { recognition.stop(); } catch(e) {}
+    }
+
+    toggleBtn.className = 'action-button start';
+    toggleBtnText.textContent = 'Start Voice Assistant';
+    setOrbState('idle', 'Spotter Paused', 'Tap to resume continuous hands-free coaching');
+}
+
+function startListening() {
+    if (!isSessionActive || isSpeaking || isProcessing || isRecognizing) return;
+    try {
+        recognition.start();
+    } catch (e) {}
+}
+
+function restartListeningCycle() {
+    if (!isSessionActive || isSpeaking || isProcessing) return;
+    setTimeout(() => {
+        if (isSessionActive && !isSpeaking && !isProcessing && !isRecognizing) {
+            startListening();
+        }
+    }, 250);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// AI QUERY PROCESSING (NVIDIA NIM + Smart Offline Fallback)
+// ──────────────────────────────────────────────────────────────────────────────
+async function processVoiceQuery(userText) {
+    isProcessing = true;
+    setOrbState('thinking', 'Spotter is thinking…', 'Analyzing your question');
+
+    // Handle voice timer commands locally for instant response
+    const lower = userText.toLowerCase();
+    if (lower.includes('timer') || lower.includes('rest')) {
+        if (lower.includes('start') || lower.includes('begin') || lower.includes('set')) {
+            startRestTimerWithSeconds(90);
+            const reply = "Rest timer started for 90 seconds. Catch your breath and shake out your arms.";
+            addMessage(reply, 'ai');
+            isProcessing = false;
+            speakResponse(reply);
+            return;
+        }
+    }
+
+    chatHistory.push({ role: 'user', content: userText });
+
+    let replyText = null;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: "meta/llama-3.3-70b-instruct",
+                messages: chatHistory,
+                max_tokens: 200,
+                temperature: 0.65
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Surface the real error from NVIDIA so the user can see what's wrong
+            const reason = data?.hint || data?.error || data?.upstream?.message || `HTTP ${response.status}`;
+            console.error('NVIDIA API error:', data);
+            showApiError(reason, response.status);
+            chatHistory.pop(); // remove the unanswered user message
+            isProcessing = false;
+            setOrbState('idle', 'API error — see banner above', reason.slice(0, 60));
+            return;
+        }
+
+        replyText = data.choices[0].message.content.trim();
+        chatHistory.push({ role: 'assistant', content: replyText });
+        hideApiError();
+
+    } catch (err) {
+        // Network-level failure (server not running, no internet etc.)
+        console.error('Fetch failed:', err);
+        const msg = location.protocol === 'file:'
+            ? 'Open http://localhost:3000 instead of opening the file directly.'
+            : 'Cannot reach server. Is "node server.js" running?';
+        showApiError(msg, 0);
+        chatHistory.pop();
+        isProcessing = false;
+        setOrbState('idle', 'Connection error', msg.slice(0, 60));
+        return;
+    }
+
+    isProcessing = false;
+
+    // Add inline form cue cards where relevant
+    checkAndAttachMediaCard(userText);
+
+    addMessage(replyText, 'ai');
+    speakResponse(replyText);
+}
+
+// Show / hide API error banner
+function showApiError(msg, status) {
+    let banner = document.getElementById('apiBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'apiBanner';
+        banner.style.cssText = 'background:#FF6A4D;color:#0E0F0A;font-size:13px;font-weight:700;padding:9px 16px;text-align:center;border-radius:8px;margin:0 1.25rem 0.5rem;line-height:1.4;';
+        const bar = document.querySelector('.bottom-action-bar');
+        bar.parentNode.insertBefore(banner, bar);
+    }
+    banner.style.display = 'block';
+    banner.textContent = '⚠️ ' + (status === 401 ? 'Invalid API key — check config.json.' : status === 429 ? 'Rate limited or out of NVIDIA credits.' : msg);
+    addMessage('⚠️ ' + banner.textContent, 'ai');
+}
+
+function hideApiError() {
+    const b = document.getElementById('apiBanner');
+    if (b) b.style.display = 'none';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TTS ENGINE (Natural Voice Selection & Automatic Listening Loop)
+// ──────────────────────────────────────────────────────────────────────────────
+function speakResponse(text) {
+    if (!synth) {
+        restartListeningCycle();
+        return;
+    }
+
+    synth.cancel(); // Stop any pending utterances
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.02;
+
+    // Pick the most natural, human-sounding voice available
+    const voices = synth.getVoices();
+    const bestVoice = voices.find(v => /samantha|karen|victoria|moira|google us english|google uk english female|natural|daniel/i.test(v.name))
+                   || voices.find(v => /en[-_]US|en[-_]GB/i.test(v.lang))
+                   || voices[0];
+    if (bestVoice) utterance.voice = bestVoice;
+
+    utterance.onstart = () => {
+        isSpeaking = true;
+        setOrbState('speaking', 'Spotter coaching…', 'Tap orb anytime to interrupt or speak');
+    };
+
+    utterance.onend = utterance.onerror = () => {
+        isSpeaking = false;
+        if (isSessionActive) {
+            setOrbState('listening', 'Listening… what\'s next?', 'Hands-free loop active');
+            restartListeningCycle();
+        } else {
+            setOrbState('idle', 'Session paused', 'Tap Start to talk again');
+        }
+    };
+
+    synth.speak(utterance);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// UI VISUAL STATES
+// ──────────────────────────────────────────────────────────────────────────────
+function setOrbState(state, heading, sub) {
+    voiceCard.classList.remove('state-listening', 'state-thinking', 'state-speaking');
+    waveform.classList.remove('active');
+
+    if (state !== 'idle') {
+        voiceCard.classList.add(`state-${state}`);
+    }
+
+    if (state === 'listening' || state === 'speaking') {
+        waveform.classList.add('active');
+    }
+
+    statusHeading.textContent = heading;
+    statusSub.textContent = sub;
+}
+
+function addMessage(text, sender) {
+    const bubble = document.createElement('div');
+    bubble.className = `msg-bubble ${sender}`;
+    bubble.textContent = text;
+    conversationPanel.appendChild(bubble);
+    conversationPanel.scrollTop = conversationPanel.scrollHeight;
+}
+
+function speakQuickCue(text) {
+    if (!isSessionActive) {
+        startVoiceSession();
+    }
+    setTimeout(() => {
+        addMessage(text, 'user');
+        processVoiceQuery(text);
+    }, 200);
+}
+
+function sendTextMessage() {
+    const text = chatTextInput.value.trim();
+    if (!text) return;
+    chatTextInput.value = '';
+    addMessage(text, 'user');
+    processVoiceQuery(text);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// EXERCISE FORM & SUPPLEMENT MEDIA CARDS
+// ──────────────────────────────────────────────────────────────────────────────
+const EXERCISE_CUES = {
+    squat: { title: "Squat Form Cues", cues: ["Chest up, weight through mid-foot", "Knees track over toes, hips sink below knees"] },
+    deadlift: { title: "Deadlift Form Cues", cues: ["Flat back, push the floor away", "Keep the bar glued against your shins"] },
+    bench: { title: "Bench Press Form Cues", cues: ["Shoulder blades pinched & retracted", "Bar touches mid-chest, elbows at 45 degrees"] },
+    row: { title: "Barbell Row Form Cues", cues: ["Hinge at hips with flat torso", "Pull bar towards belly button, squeeze lats"] }
+};
+
+const NUTRITION_CUES = {
+    protein: { title: "Protein Quick Guide", cues: ["Aim for 1.6–2.2g per kg bodyweight daily", "Spread across 3–4 meals, 25–40g per serving", "Whey shake post-workout is a convenient option"] },
+    creatine: { title: "Creatine Basics", cues: ["Take 3–5g creatine monohydrate daily", "Timing doesn't matter — consistency does", "One of the most researched supplements available"] },
+    supplement: { title: "Supplement Stack", cues: ["Protein powder — fill protein gaps", "Creatine — strength & power output", "Vitamin D + Omega-3 — recovery support"] },
+    macro: { title: "Macro Targets", cues: ["Protein: 1.6–2.2g/kg", "Carbs: 3–5g/kg (higher on training days)", "Fats: 0.8–1g/kg for hormones & energy"] },
+    meal: { title: "Meal Timing", cues: ["Pre-workout: carbs + protein 1–2 hrs before", "Post-workout: protein + carbs within 2 hrs", "Stay hydrated — 2.5–3.5L water daily"] }
+};
+
+function checkAndAttachMediaCard(text) {
+    const t = text.toLowerCase();
+    for (const [key, val] of Object.entries(EXERCISE_CUES)) {
+        if (t.includes(key)) {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.innerHTML = `<div class="media-title">🏋️ ${val.title}</div><ul>${val.cues.map(c => `<li>${c}</li>`).join('')}</ul>`;
+            conversationPanel.appendChild(card);
+            conversationPanel.scrollTop = conversationPanel.scrollHeight;
+            break;
+        }
+    }
+    for (const [key, val] of Object.entries(NUTRITION_CUES)) {
+        if (t.includes(key)) {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.innerHTML = `<div class="media-title">🥗 ${val.title}</div><ul>${val.cues.map(c => `<li>${c}</li>`).join('')}</ul>`;
+            conversationPanel.appendChild(card);
+            conversationPanel.scrollTop = conversationPanel.scrollHeight;
+            break;
+        }
+    }
+}
+
+
+// ──────────────────────────────────────────────────────────────────────────────
+// APP MODE SWITCHER
+// ──────────────────────────────────────────────────────────────────────────────
+function setAppMode(mode) {
+    const pillVoice = document.getElementById('pillVoice');
+    const pillTools = document.getElementById('pillTools');
+    const pillNutrition = document.getElementById('pillNutrition');
+    const toolsView = document.getElementById('toolsView');
+    const nutritionView = document.getElementById('nutritionView');
+
+    pillVoice.classList.remove('active');
+    pillTools.classList.remove('active');
+    pillNutrition.classList.remove('active');
+    toolsView.classList.remove('active');
+    nutritionView.classList.remove('active');
+
+    if (mode === 'voice') {
+        pillVoice.classList.add('active');
+        voiceCard.style.display = 'flex';
+    } else if (mode === 'tools') {
+        pillTools.classList.add('active');
+        toolsView.classList.add('active');
+        voiceCard.style.display = 'none';
+    } else if (mode === 'nutrition') {
+        pillNutrition.classList.add('active');
+        nutritionView.classList.add('active');
+        voiceCard.style.display = 'none';
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// WORKOUT LOGGER & REST TIMER
+// ──────────────────────────────────────────────────────────────────────────────
+let setsLogged = [];
+function logSet() {
+    const ex = document.getElementById('ex-select').value;
+    const reps = document.getElementById('reps-input').value;
+    const rpe = document.getElementById('rpe-slider').value;
+
+    setsLogged.push({ ex, reps, rpe });
+    const list = document.getElementById('session-list');
+    list.innerHTML = setsLogged.map(s => `<div class="session-item"><span>${s.ex} — ${s.reps} reps</span><span class="rpe">RPE ${s.rpe}</span></div>`).join('');
+
+    // Voice cue feedback
+    const cue = rpe >= 9
+        ? `Top effort logged on ${ex}. Take a solid two-minute rest before the next round.`
+        : `Solid set of ${reps} reps on ${ex}. Keep that crisp form for the rest.`;
+
+    addMessage(`Logged: ${ex}, ${reps} reps @ RPE ${rpe}`, 'user');
+    addMessage(cue, 'ai');
+    speakResponse(cue);
+    startRestTimerWithSeconds(90);
+}
+
+let timeLeft = 90;
+let timerId = null;
+const timerNum = document.getElementById('timer-num');
+const timerCue = document.getElementById('timer-cue');
+const timerBtn = document.getElementById('timer-btn');
+
+function startRestTimerWithSeconds(sec) {
+    clearInterval(timerId);
+    timeLeft = sec;
+    timerNum.textContent = formatTime(timeLeft);
+    timerBtn.textContent = 'Pause';
+    timerCue.textContent = "Breathe in through nose, out slow through mouth.";
+
+    timerId = setInterval(() => {
+        timeLeft -= 1;
+        if (timeLeft <= 0) {
+            clearInterval(timerId);
+            timerId = null;
+            timeLeft = 0;
+            timerNum.textContent = '0:00';
+            timerBtn.textContent = 'Start Rest';
+            timerCue.textContent = "Time's up! Ready for your next set.";
+            speakResponse("Rest time is up! Get back in position and own this set.");
+            return;
+        }
+        timerNum.textContent = formatTime(timeLeft);
+    }, 1000);
+}
+
+function toggleTimer() {
+    if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+        timerBtn.textContent = 'Resume';
+    } else {
+        startRestTimerWithSeconds(timeLeft || 90);
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerId);
+    timerId = null;
+    timeLeft = 90;
+    timerNum.textContent = '1:30';
+    timerCue.textContent = 'Set your rest, then start.';
+    timerBtn.textContent = 'Start Rest';
+}
+
+function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m + ':' + String(sec).padStart(2, '0');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// EVENT LISTENERS & STARTUP
+// ──────────────────────────────────────────────────────────────────────────────
+toggleBtn.addEventListener('click', () => {
+    if (isSessionActive) {
+        stopVoiceSession();
+    } else {
+        startVoiceSession();
+    }
+});
+
+// Click orb to toggle session or interrupt speech
+orbClickTarget.addEventListener('click', () => {
+    if (isSpeaking) {
+        synth.cancel(); // Interrupt speech and start listening
+        isSpeaking = false;
+        startListening();
+    } else if (!isSessionActive) {
+        startVoiceSession();
+    } else {
+        startListening();
+    }
+});
+
+// Warm up voices
+if (synth) {
+    synth.getVoices();
+    if (synth.onvoiceschanged !== undefined) {
+        synth.onvoiceschanged = () => synth.getVoices();
+    }
+}
+
+// Connectivity check
+(async function checkServer() {
+    if (location.protocol === 'file:') {
+        serverBanner.style.display = 'block';
+        serverBanner.innerHTML = "⚠️ You opened this file directly. Spotter needs the server. " +
+            "Run <code style='background:rgba(0,0,0,0.15);padding:2px 6px;border-radius:4px'>node server.js</code> " +
+            "and open <b>http://localhost:3000</b>";
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.hasKey) {
+            serverBanner.style.display = 'block';
+            serverBanner.innerHTML = "⚠️ Server is running but no NVIDIA API key found in <b>config.json</b>. Check config and restart.";
+        }
+    } catch (e) {
+        serverBanner.style.display = 'block';
+        serverBanner.innerHTML = "⚠️ Can't reach server. Make sure it's running: <code style='background:rgba(0,0,0,0.15);padding:2px 6px;border-radius:4px'>node server.js</code>";
+    }
+})();
+</script>
+</body>
+</html>
