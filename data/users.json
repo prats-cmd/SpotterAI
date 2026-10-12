@@ -1,0 +1,114 @@
+{
+  "users": {
+    "spotter-d1fcb87d-e388-4f8a-be19-b0d8a528f543": {
+      "profile": {
+        "goal": "Be 100 kgs by november this year",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [
+        {
+          "date": "2026-10-12",
+          "exercise": "Back squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0
+            }
+          ],
+          "fatigue": "Moderate",
+          "notes": "",
+          "savedAt": "2026-10-12T22:07:50.491Z"
+        }
+      ],
+      "personalRecords": [],
+      "streak": 1,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T21:46:37.835Z",
+      "updatedAt": "2026-10-12T22:07:50.491Z"
+    },
+    "spotter-59ebe3cb-a70f-4a6a-8ed6-fe62d170654f": {
+      "profile": {
+        "goal": "",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [],
+      "personalRecords": [],
+      "streak": 0,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T21:56:28.988Z",
+      "updatedAt": "2026-10-12T21:56:28.988Z"
+    },
+    "spotter-4b9ffcb0-346f-4a8a-8b86-0da2104bc71c": {
+      "profile": {
+        "goal": "",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [],
+      "personalRecords": [],
+      "streak": 0,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T21:58:35.421Z",
+      "updatedAt": "2026-10-12T21:58:35.421Z"
+    },
+    "spotter-0314fcc8-6ed5-44ab-bb5b-44452c18e63e": {
+      "profile": {
+        "goal": "",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [],
+      "personalRecords": [],
+      "streak": 0,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T22:01:57.729Z",
+      "updatedAt": "2026-10-12T22:01:57.730Z"
+    },
+    "spotter-95cf1411-b7ce-427e-8611-9fbb471c4ccb": {
+      "profile": {
+        "goal": "",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [],
+      "personalRecords": [],
+      "streak": 0,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T22:13:50.882Z",
+      "updatedAt": "2026-10-12T22:13:50.882Z"
+    },
+    "spotter-bc7cfdb8-3c13-4a96-8dd2-50685ed8c75e": {
+      "profile": {
+        "goal": "",
+        "experience": "",
+        "equipment": []
+      },
+      "workouts": [],
+      "personalRecords": [],
+      "streak": 0,
+      "preferences": {
+        "coachingStyle": "Encouraging"
+      },
+      "conversationSummaries": [],
+      "createdAt": "2026-10-12T22:13:58.004Z",
+      "updatedAt": "2026-10-12T22:13:58.004Z"
+    }
+  }
+}

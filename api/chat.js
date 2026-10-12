@@ -1,24 +1,24 @@
 const https = require('https');
 
-// Model fallback chain (identical to server.js)
+// Model fallback chain for NVIDIA Nemotron
 const MODELS = [
-    'openai/gpt-oss-120b',   // replaces llama-3.3-70b-versatile
-    'qwen/qwen3.6-27b',      // alternative flagship
-    'openai/gpt-oss-20b',    // replaces llama-3.1-8b-instant
-    'llama3-70b-8192',       // legacy fallback
-    'gemma2-9b-it'           // last resort
+    'nvidia/nemotron-3-ultra-550b-a55b',
+    'nvidia/nemotron-3-super-120b-a12b',
+    'nvidia/nemotron-3.5-lightning-30b-a3b',
+    'openai/gpt-oss-20b'
 ];
 
-function groqRequest(payload, apiKey) {
+function nemotronRequest(payload, apiKey) {
     return new Promise((resolve, reject) => {
         const postData = JSON.stringify(payload);
         const req = https.request({
-            hostname: 'api.groq.com',
-            path: '/openai/v1/chat/completions',
+            hostname: 'integrate.api.nvidia.com',
+            path: '/v1/chat/completions',
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Content-Length': Buffer.byteLength(postData)
             }
         }, (res) => {
@@ -26,7 +26,7 @@ function groqRequest(payload, apiKey) {
             res.on('data', chunk => body += chunk);
             res.on('end', () => resolve({ status: res.statusCode, body }));
         });
-        req.setTimeout(30000, () => req.destroy(new Error('Groq request timed out')));
+        req.setTimeout(30000, () => req.destroy(new Error('Nemotron request timed out')));
         req.on('error', reject);
         req.write(postData);
         req.end();
@@ -48,11 +48,11 @@ module.exports = async (req, res) => {
         return;
     }
 
-    const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-    if (!GROQ_API_KEY) {
+    const NEMOTRON_API_KEY = process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY || process.env.GROQ_API_KEY || '';
+    if (!NEMOTRON_API_KEY) {
         res.status(500).json({
-            error: 'GROQ_API_KEY not configured',
-            hint: 'Add GROQ_API_KEY to your Vercel Project Settings > Environment Variables.'
+            error: 'NEMOTRON_API_KEY not configured',
+            hint: 'Add NEMOTRON_API_KEY or NVIDIA_API_KEY to your Vercel Project Settings > Environment Variables.'
         });
         return;
     }
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
     try {
         for (const model of MODELS) {
             payload.model = model;
-            const result = await groqRequest(payload, GROQ_API_KEY);
+            const result = await nemotronRequest(payload, NEMOTRON_API_KEY);
             let data;
             try { data = JSON.parse(result.body); } catch(e) { data = { raw: result.body }; }
 
@@ -105,13 +105,13 @@ module.exports = async (req, res) => {
         res.status(lastResult?.status || 500).json({
             error: errMsg,
             hint: lastResult?.status === 401
-                ? 'Invalid API key — check console.groq.com'
+                ? 'Invalid API key — check build.nvidia.com'
                 : lastResult?.status === 429
                 ? 'Rate limited — wait a moment and try again.'
                 : 'Check logs for full error details.'
         });
     } catch (err) {
         console.error('Network error:', err.message);
-        res.status(502).json({ error: 'Could not reach Groq API', details: err.message });
+        res.status(502).json({ error: 'Could not reach Nemotron API', details: err.message });
     }
 };

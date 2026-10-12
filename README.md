@@ -1,351 +1,403 @@
-# Spotter AI
+<div align="center">
 
-Spotter AI is a lightweight, real-time AI coaching assistant designed to help users practice conversations, improve communication quality, and receive instant feedback through voice and text interactions. The project combines an interactive front-end experience with a secure Node.js API proxy that routes requests to Groq-hosted large language models.
+# 🏋️ Spotter AI — Voice Fitness Coach & Companion
 
-This project is positioned as a practical AI product for users who want a fast, private, low-friction coaching experience without needing a complex backend or heavy database infrastructure at MVP stage.
+**An ultra-low latency, real-time voice coaching assistant powered by NVIDIA Nemotron (550B) with persistent anonymous memory.**
 
-## 1. Executive Summary
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![NVIDIA NIM](https://img.shields.io/badge/AI_Engine-NVIDIA_Nemotron-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com/)
+[![Zero External Dependencies](https://img.shields.io/badge/Dependencies-Zero_NPM-007ACC?style=for-the-badge)](https://nodejs.org/api/)
+[![Storage](https://img.shields.io/badge/Storage-Atomic_JSON_Memory-orange?style=for-the-badge)](./data/users.json)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](./LICENSE)
 
-Spotter AI solves a common problem: people want intelligent, on-demand coaching for communication but do not have access to a persistent, personalized, low-friction system they can use anytime.
+[Live Demo](#-getting-started) • [Architecture](#-system-architecture) • [Memory System](#-memory--persistence-engine) • [API Reference](#-api-specification) • [Deployment](#-deployment--production)
 
-The current product enables:
-- live AI conversation in text mode
-- voice-based interaction using browser speech APIs
-- a real-time coaching experience with an animated, conversational interface
-- secure LLM access through a backend proxy instead of exposing the API key in the browser
+</div>
 
-At a higher level, this product is a foundation for future use cases such as:
-- interview preparation
-- public speaking practice
-- leadership communication coaching
-- sales conversation rehearsal
-- daily confidence and communication training
+---
 
-## 2. Product Problem Statement
+## 📋 Executive Overview
 
-### Real-world problem
-Many users struggle with communication improvement because coaching is expensive, inconsistent, or unavailable in the moment. Traditional solutions usually require:
-- a human coach or mentor
-- scheduled sessions
-- high costs
-- limited practice frequency
-- lack of personalized, always-available feedback
+**Spotter AI** is an AI-powered fitness companion engineered to bridge the gap between static workout trackers and human personal trainers. It pairs an animated conversational voice user interface with an atomic, zero-database memory engine and an enterprise LLM proxy routing directly to **NVIDIA NIM (Nemotron)**.
 
-For students, job seekers, founders, and professionals, communication is often the difference between opportunity and missed opportunity. Yet most users do not have a convenient way to practice repeatedly in realistic scenarios.
+### Key Highlights
+- **🎙️ Real-time Voice & Visual Feedback**: Fluid, responsive Siri-style audio orb and real-time Web Speech recognition with speech synthesis feedback.
+- **⚡ NVIDIA Nemotron Flagship Intelligence**: High-throughput chat completions driven by `nvidia/nemotron-3-ultra-550b-a55b` with multi-tier failover.
+- **🧠 Frictionless Persistent Memory**: Anonymous, cookie-anchored state tracking (`spotter_sid`) retaining fitness goals, personal records (PRs), workout volume, and active streaks across sessions without requiring logins or database overhead.
+- **🔄 Conversational Intent & Workout Extraction**: Automated pattern recognition parses conversational logs (e.g., *"Did 3 sets of 10 bench press at 80kg"*) into structured workout logs on the fly.
+- **🛡️ Secure Gateway**: Server-side credential isolation ensuring raw API tokens never touch browser runtime. Zero external NPM runtime dependencies.
 
-### Why the problem matters
-Confidence, clarity, and preparation directly affect outcomes in:
-- interviews
-- startup pitches
-- team meetings
-- sales conversations
-- customer interactions
-- networking
+---
 
-The cost of poor communication is often much higher than the cost of building a smart practice tool.
+## 🏗️ System Architecture
 
-## 3. Product Vision
+Spotter is designed with an intentionally lean, zero-bloat architecture: the front-end runs purely on standard web platform APIs, while the backend utilizes native Node.js HTTP/HTTPS primitives with an atomic write-lock storage subsystem.
 
-Spotter AI aims to become a personal AI communication coach that is:
-- always available
-- fast and conversational
-- accessible via voice and text
-- personalized over time
-- useful for daily practice and confidence building
-
-The MVP is intentionally focused on speed, accessibility, and simplicity. It is not a massive enterprise platform yet; instead, it is a strong proof of concept for a future AI-native coaching product.
-
-## 4. Core User Needs
-
-### Primary users
-- job seekers preparing for interviews
-- students practicing presentations or spoken responses
-- startup founders practicing pitch storytelling
-- professionals improving workplace communication
-- people who want easier, low-pressure daily confidence coaching
-
-### User pain points
-- no immediate access to feedback
-- weak self-practice without accountability
-- difficult to rehearse with no realistic conversation partner
-- expensive coaching services
-- inconsistent preparation quality
-
-### Product value
-Spotter AI gives users a responsive AI conversation partner that feels immediate, low-stakes, and practical. It reduces friction in the path from “I want to practice” to “I am practicing right now.”
-
-## 5. Product Scope and MVP
-
-### Included in this version
-- single-page chat interface
-- voice-enabled interaction using browser speech recognition
-- backend LLM proxy for secure API routing
-- Groq model fallback support
-- health check endpoint
-- local deployment support for easy development and testing
-
-### Out of scope for MVP
-- persistent user accounts
-- chat history database
-- authentication and authorization
-- analytics dashboard
-- premium subscription management
-- multi-user collaboration
-- advanced speech-to-speech personalization
-
-## 6. Problem-to-Solution Mapping
-
-| Problem | User friction | Spotter AI solution |
-| --- | --- | --- |
-| Lack of practice time | Users do not practice often enough | Quick AI conversation available anytime |
-| High coaching cost | Human coaching is expensive | Uses affordable LLM APIs for instant feedback |
-| Fear of judgment | Users avoid public practice | AI acts as a safe and always-available partner |
-| Inconsistent preparation | No structured guidance | Offers guided conversational flows |
-| Limited access to feedback | People cannot get instant coaching | Enables live, real-time assistant responses |
-
-## 7. Product Experience Flow
-
-This product is designed to feel simple: the user opens the app, speaks or types a prompt, and receives a useful response in a conversational format.
+### High-Level Topology
 
 ```mermaid
 flowchart TD
-    A[User opens Spotter AI] --> B[Choose voice or text mode]
-    B --> C[User enters prompt or speaks]
-    C --> D[Browser sends request to Node.js server]
-    D --> E[Server validates config and calls Groq API]
-    E --> F[LLM generates coaching or response]
-    F --> G[Server returns result to browser]
-    G --> H[UI displays answer and updates voice UI state]
-    H --> I[User continues the conversation]
+    subgraph Client["Browser Client (Vanilla HTML5 / Web APIs)"]
+        UI["Conversational UI & Siri Orb Stage"]
+        SpeechIn["Web Speech Recognition (STT)"]
+        SpeechOut["SpeechSynthesis (TTS)"]
+        Dashboard["Real-Time Memory Dashboard"]
+    end
+
+    subgraph Server["Spotter Node.js Gateway (Native HTTP)"]
+        Router["HTTP Router & Static File Server"]
+        CookieEngine["Identity & Cookie Parser (spotter_sid)"]
+        MemService["Memory Service (services/memory.js)"]
+        LockMgr["Queue & Write-Lock Manager"]
+        ContextInj["Dynamic System Prompt Injector"]
+        NvidiaProxy["NVIDIA NIM Client (HTTPS)"]
+    end
+
+    subgraph Storage["Persistent Storage"]
+        UserJSON[("data/users.json\n(Atomic File Store)")]
+    end
+
+    subgraph AI["NVIDIA Cloud Inference (NIM)"]
+        Nemotron["nvidia/nemotron-3-ultra-550b-a55b\n(Primary Flagship)"]
+        Fallbacks["Super 120B / Lightning 30B / GPT-OSS"]
+    end
+
+    UI --> SpeechIn
+    SpeechIn --> Router
+    Router --> CookieEngine
+    CookieEngine --> MemService
+    MemService --> LockMgr
+    LockMgr <--> UserJSON
+    MemService --> ContextInj
+    ContextInj --> NvidiaProxy
+    NvidiaProxy <--> Nemotron
+    Nemotron -. Failover .-> Fallbacks
+    NvidiaProxy --> Router
+    Router --> UI
+    UI --> SpeechOut
+    Router --> Dashboard
 ```
 
-## 8. System Architecture
+---
 
-The current architecture is intentionally minimal and production-ready for an MVP. It separates the user interface from the model access layer and keeps sensitive credentials on the server side.
-
-```mermaid
-flowchart LR
-    U[User Browser] --> UI[Single Page UI<br/>index_spotter.html]
-    UI --> API[HTTP API<br/>/api/chat and /api/health]
-    API --> S[Node.js Server<br/>server.js]
-    S --> C[config.json or environment variables]
-    S --> G[Groq API]
-    G --> M[LLM Model Layer<br/>gpt-oss / qwen / llama / gemma]
-    M --> S
-    S --> UI
-```
-
-### Architectural notes
-- The browser never directly calls the external model provider.
-- API keys remain server-side, reducing leakage risk.
-- The app relies on local deployment while keeping the stack simple.
-- Model fallback logic improves reliability when one model is unavailable.
-
-## 9. Sequence Diagram
+## 🔄 End-to-End Sequence Lifecycle
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Browser
-    participant Server as Node.js Server
-    participant Groq as Groq Models
+    autonumber
+    participant User as Athlete (Browser)
+    participant Client as Spotter Client (index.html)
+    participant Server as Gateway (server.js)
+    participant Memory as Memory Engine (memory.js)
+    participant NIM as NVIDIA NIM (Nemotron 550B)
 
-    User->>Browser: Types a message or speaks
-    Browser->>Server: POST /api/chat
-    Server->>Server: Validate API key and payload
-    Server->>Groq: Send chat completion request
-    Groq-->>Server: Model response
-    Server-->>Browser: JSON response
-    Browser-->>User: Display answer / voice playback
+    User->>Client: Speaks: "Hey Spotter, did 3 sets of 8 back squats at 100kg"
+    Client->>Client: STT converts speech to text & renders user bubble
+    Client->>Server: POST /api/chat (Cookie: spotter_sid=...)
+    Server->>Memory: Lookup user state by anonymous session ID
+    Memory-->>Server: Return: Goal, PRs, Streaks, Recent Workouts
+    Server->>Server: Prepend memory context into LLM system prompt
+    Server->>NIM: POST /v1/chat/completions (Injected Payload)
+    NIM-->>Server: 200 OK: "Solid volume! 2,400kg total. How did the last rep feel?"
+    Server->>Memory: Regex parses: "Back squats 3x8 @ 100kg" -> Updates PR & Streak
+    Memory->>Memory: Atomic write to data/users.json
+    Server-->>Client: HTTP 200 JSON with AI reply + Metadata headers
+    Client->>Client: TTS audio playback & Orb waveform animation
+    Client->>Client: Auto-updates Memory Dashboard stats (Streak + PRs)
 ```
 
-## 10. Data Model and Logical Structure
+---
 
-This MVP does not currently use a database, but conceptually the product can be represented as a lightweight conversational data model.
+## 🧠 Memory & Persistence Engine
 
-```mermaid
-erDiagram
-    USER ||--o{ SESSION : starts
-    SESSION ||--o{ MESSAGE : contains
-    MESSAGE }o--|| MODEL : uses
+Unlike standard stateless LLM wrappers, Spotter implements a deterministic memory system tailored for fitness progression:
 
-    USER {
-        string id
-        string name
-        string role
-    }
+### 1. Anonymous Identity Resolution
+When a user accesses Spotter, the backend evaluates the incoming `spotter_sid` cookie. If absent, a cryptographically random UUID v4 identifier is minted and returned via an `HttpOnly`, `SameSite=Lax` cookie valid for 365 days.
 
-    SESSION {
-        string session_id
-        datetime created_at
-        string mode
-    }
+### 2. Atomic Storage & Concurrency
+Persistent data is maintained in [`data/users.json`](./data/users.json). Writes are serialized through an asynchronous queue lock mechanism to prevent race conditions during concurrent interactions.
 
-    MESSAGE {
-        string message_id
-        string sender
-        string content
-        datetime timestamp
-    }
-
-    MODEL {
-        string model_name
-        string provider
-        string version
-    }
+### 3. Context Injection Pipeline
+Before routing prompts to NVIDIA NIM, `services/memory.js` constructs an injected context payload:
+```text
+=== SAVED USER CONTEXT (from previous sessions) ===
+- Profile: Goal: Be 100 kgs by november this year | Level: Intermediate
+- Active Streak: 3 consecutive days
+- Personal Records:
+  * Bench press: 85kg
+  * Back squat: 100kg
+- Recent Workouts:
+  * 2026-10-12: Back squat (3 sets, max 100kg)
+  * 2026-10-11: Bench press (4 sets, max 85kg)
+Use this saved context naturally in your coaching. Acknowledge PRs, encourage streaks, and adjust advice accordingly.
 ```
 
-### Data handling in current version
-- User input is handled transiently in-browser
-- A backend request is sent for AI processing
-- The model response is returned immediately
-- No permanent chat database is required for MVP
+### 4. Dynamic NLP Intent Extraction
+The gateway automatically inspects conversation pairs for workout logs and fitness aspirations:
+- **Workout Patterns**: Matches expressions like `did 3 sets of 10 bench at 80kg` or `logged squats 4x8 @ 100`.
+- **Goal Statements**: Detects statements like `my goal is to bulk up` or `i want to hit a 140kg deadlift`.
 
-## 11. Technical Stack
+---
 
-| Layer | Technology | Purpose |
-| --- | --- | --- |
-| Runtime | Node.js | Application runtime |
-| Backend | Native HTTP server in Node.js | Lightweight API layer |
-| Frontend | HTML, CSS, JavaScript | Chat and voice user interface |
-| Voice | Web Speech API | Browser-based speech recognition and playback |
-| AI Provider | Groq | Fast inference for chat completions |
-| Configuration | JSON config + environment variables | Secure secret management |
-| Deployment | Local Node server | Simple MVP deployment |
+## 🤖 AI Model Fallback Strategy
 
-## 12. Current Product Features
+Spotter connects directly to NVIDIA NIM's OpenAI-compatible completions endpoint (`integrate.api.nvidia.com`). To guarantee high availability, the server enforces a robust fallback cascade:
 
-### Text-based coaching
-Users can type prompts and receive AI-generated feedback in real time.
+| Priority | Model Identifier | Architecture | Target Role |
+| :---: | :--- | :--- | :--- |
+| **Primary** | `nvidia/nemotron-3-ultra-550b-a55b` | 550B MoE Transformer | High-reasoning coaching, volume analytics, programming |
+| **Secondary** | `nvidia/nemotron-3-super-120b-a12b` | 120B Dense Transformer | Rapid coaching responses & routine suggestions |
+| **Tertiary** | `nvidia/nemotron-3.5-lightning-30b-a3b` | 30B Compact | Low-latency voice turnaround |
+| **Fallback** | `openai/gpt-oss-20b` | 20B General Purpose | Failsafe uptime fallback |
 
-### Voice-based interaction
-The interface supports speech recognition and can simulate an interactive conversational experience with an animated orb.
+---
 
-### Model fallback system
-The backend tries a series of Groq models to improve availability and resilience.
+## 📁 Repository Structure
 
-### Security-conscious server design
-The API key is kept on the server side instead of exposing it in browser-side code.
+```text
+SpotterAI-main/
+├── api/
+│   ├── chat.js                 # Vercel serverless function for AI completions
+│   └── health.js               # Vercel serverless function for health checks
+├── data/
+│   └── users.json              # Atomic persistent storage for profiles & memory
+├── public/
+│   └── index.html              # Canonical Single-Page Application (SPA)
+├── services/
+│   └── memory.js               # Memory CRUD, lock manager & context builder
+├── .gitignore                  # Excludes secrets, runtime data & node_modules
+├── config.json                 # Active local configuration (NEMOTRON_API_KEY)
+├── config.json.example         # Reference configuration template
+├── index.html                  # Root static entry point (mirrors public/index.html)
+├── package.json                # Project manifest & execution scripts
+├── README.md                   # Complete architectural & operational guide
+├── server.js                   # Production Node.js HTTP gateway & proxy
+└── vercel.json                 # Vercel Edge/Serverless routing configuration
+```
 
-## 13. Product Roadmap
+---
 
-### Phase 1: MVP launch
-- stable voice + text chat
-- Groq API integration
-- health check endpoint
-- local deployment
-- polished front-end experience
+## 🚀 Getting Started
 
-### Phase 2: Personalization
-- session history
-- user preferences
-- conversation memory
-- feedback quality scoring
+### Prerequisites
+- **Node.js**: v18.0.0 or higher ([Download](https://nodejs.org/))
+- **NVIDIA NIM API Key**: Free tier or enterprise key from [build.nvidia.com](https://build.nvidia.com/)
 
-### Phase 3: Structured coaching flows
-- mock interview mode
-- pitch practice mode
-- speaking scorecards
-- role-based coaching experiences
+### 1. Clone & Setup
+```bash
+git clone https://github.com/your-username/SpotterAI-main.git
+cd SpotterAI-main
+```
 
-### Phase 4: Scale and productization
-- authentication
-- dashboard analytics
-- subscription model
-- user accounts and saved progress
-- multi-modal coaching experiences
-
-## 14. Business and Strategic Value
-
-Spotter AI is attractive as an AI product because it combines three important dimensions:
-- practical user need
-- low implementation complexity
-- clear future expansion path
-
-It is especially valuable for founders and product teams seeking a real-world AI demo that maps to a meaningful user problem with strong usability and growth potential.
-
-## 15. Risks and Considerations
-
-### Technical risks
-- model availability or rate limits from LLM providers
-- browser speech API variability across devices
-- internet dependency for real-time AI responses
-
-### Product risks
-- generic AI output without strong user context
-- weak differentiation without a clear coaching persona
-- poor UX if voice flow is not smooth and responsive
-
-### Mitigation strategies
-- use model fallback logic
-- maintain a clean and responsive UI
-- structure prompts around practical coaching patterns
-- add personalization in later stages
-
-## 16. Why This Project Is Strong
-
-This project shows a good product foundation because it is:
-- user-centric
-- technically lightweight
-- quick to demo
-- scalable into a serious AI coaching platform
-- easy to understand for product stakeholders and developers
-
-It demonstrates that a valuable AI product does not always require a massive stack at the beginning; it requires clear user value, thoughtful interaction design, and a strong technical execution path.
-
-## 17. Getting Started
-
-### 1. Install Node.js
-Download from [nodejs.org](https://nodejs.org) and use a recent version.
-
-### 2. Configure the API key
-Copy `config.json.example` to `config.json` and add your Groq key:
-
+### 2. Configure Your API Key
+Create a `config.json` in the project root:
 ```json
 {
-  "GROQ_API_KEY": "gsk_YOUR_KEY_HERE"
+  "NEMOTRON_API_KEY": "nvapi-YOUR_NVIDIA_API_KEY_HERE"
 }
 ```
 
-You can also set the key as an environment variable:
-
+*Alternatively, export it as an environment variable:*
 ```bash
-export GROQ_API_KEY="gsk_YOUR_KEY_HERE"
+# macOS / Linux
+export NEMOTRON_API_KEY="nvapi-YOUR_NVIDIA_API_KEY_HERE"
+
+# Windows (PowerShell)
+$env:NEMOTRON_API_KEY="nvapi-YOUR_NVIDIA_API_KEY_HERE"
 ```
 
-### 3. Start the application
-
+### 3. Launch the Application
 ```bash
 node server.js
 ```
-
-### 4. Open the app
-Visit:
-
-```text
-http://localhost:3000
+*Or using npm:*
+```bash
+npm start
 ```
 
-## 18. Project Structure
+### 4. Access the Dashboard
+Navigate to **`http://localhost:3000`** in any modern web browser (Google Chrome, Edge, Safari).
 
-```text
-spotter-deploy/
-├── server.js
-├── index_spotter.html
-├── config.json.example
-├── config.json
-├── package.json
-├── README.md
-└── .gitignore
+---
+
+## 🔌 API Specification
+
+### `GET /api/health`
+Validates gateway connectivity, API key readiness, and memory subsystem status.
+- **Response `200 OK`**:
+```json
+{
+  "ok": true,
+  "hasKey": true,
+  "provider": "Nemotron",
+  "memory": true
+}
 ```
 
-## 19. License
+---
 
-This project is currently intended for local development, rapid prototyping, and product exploration. Please review and confirm the license strategy before commercial deployment.
+### `GET /api/memory-status`
+Returns profile and historical tracking metrics for the session identified by `spotter_sid`.
+- **Headers**: `Cookie: spotter_sid=<uuid>`
+- **Response `200 OK`**:
+```json
+{
+  "exists": true,
+  "userId": "spotter-d1fcb87d-e388-4f8a-be19-b0d8a528f543",
+  "workoutCount": 3,
+  "streak": 2,
+  "personalRecords": 1,
+  "profile": {
+    "goal": "Be 100 kgs by november this year",
+    "experience": "Intermediate",
+    "equipment": ["Barbell", "Dumbbells"]
+  },
+  "preferences": {
+    "coachingStyle": "Encouraging"
+  },
+  "lastUpdated": "2026-10-12T22:07:50.491Z",
+  "createdAt": "2026-10-12T21:46:37.835Z"
+}
+```
 
-## 20. Summary
+---
 
-Spotter AI is a focused, practical AI communication coach with a strong MVP foundation. It addresses a real pain point in a way that is simple, testable, and scalable. The project is an excellent example of turning a meaningful user problem into a usable AI product with minimal friction.
+### `POST /api/chat`
+Proxies prompts to NVIDIA Nemotron, injects historical memory, and extracts workouts/goals from conversations.
+- **Request Body**:
+```json
+{
+  "messages": [
+    { "role": "user", "content": "I finished 4 sets of 8 bench press at 85kg." }
+  ],
+  "max_tokens": 200,
+  "temperature": 0.65
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "Incredible work! That's a new Personal Record for your Bench Press at 85kg. Total volume: 2,720kg."
+      }
+    }
+  ]
+}
+```
+- **Response Headers**:
+  - `X-Model-Used`: `nvidia/nemotron-3-ultra-550b-a55b`
+  - `X-Spotter-User`: `spotter-d1fcb87d...`
 
-The combination of a clean web experience, secure backend model access, and a realistic product story makes Spotter AI a strong candidate for demo, iteration, and future growth.
+---
 
+### `POST /api/workout`
+Explicit endpoint for recording structured workout sets.
+- **Request Body**:
+```json
+{
+  "exercise": "Deadlift",
+  "sets": [
+    { "reps": 5, "weightKg": 140 },
+    { "reps": 5, "weightKg": 140 }
+  ],
+  "fatigue": "Moderate",
+  "notes": "Felt smooth and controlled"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "workout": {
+    "date": "2026-10-13",
+    "exercise": "Deadlift",
+    "sets": [{ "reps": 5, "weightKg": 140 }, { "reps": 5, "weightKg": 140 }],
+    "fatigue": "Moderate",
+    "notes": "Felt smooth and controlled",
+    "savedAt": "2026-10-13T03:30:00.000Z"
+  }
+}
+```
+
+---
+
+### `DELETE /api/clear-data`
+GDPR/privacy-compliant endpoint to wipe session history and profile data.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "message": "All your data has been cleared."
+}
+```
+
+---
+
+## 🛠️ Production & Deployment Guide
+
+### Option 1: Process Manager (PM2)
+For self-hosted Linux VPS (Ubuntu/Debian) deployments:
+```bash
+npm install -g pm2
+pm2 start server.js --name "spotter-ai"
+pm2 startup
+pm2 save
+```
+
+### Option 2: Docker Containerization
+Create a `Dockerfile`:
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+COPY . .
+EXPOSE 3000
+ENV NODE_ENV=production
+CMD ["node", "server.js"]
+```
+Build and run:
+```bash
+docker build -t spotter-ai .
+docker run -d -p 3000:3000 -e NEMOTRON_API_KEY="nvapi-..." --name spotter spotter-ai
+```
+
+### Option 3: Vercel Serverless
+The repository includes pre-configured [`vercel.json`](./vercel.json) and serverless handlers in [`api/`](./api/):
+1. Import repository to Vercel.
+2. In Project Settings > Environment Variables, add:
+   - `NEMOTRON_API_KEY`: `nvapi-YOUR_KEY_HERE`
+3. Deploy.
+
+---
+
+## 🔒 Security & Privacy Considerations
+
+1. **Server-Side Credential Guarding**: `NEMOTRON_API_KEY` is loaded strictly server-side and never forwarded to client assets.
+2. **Path Traversal Protection**: Static asset resolution validates file paths using `path.basename()` and explicitly forbids access to sensitive files (e.g., `config.json`).
+3. **Cookie Attributes**: Cookies are marked `HttpOnly` to mitigate XSS exposure and `SameSite=Lax` to safeguard against CSRF.
+4. **Isolated Zero-Dependency Surface**: Running on native Node.js core libraries eliminates npm supply-chain vulnerabilities.
+
+---
+
+## 🤝 Contributing
+
+Contributions from fitness engineers, AI researchers, and frontend developers are welcome!
+1. Fork the Project.
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the Branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+---
+
+## 📜 License
+
+Distributed under the **MIT License**. See [`LICENSE`](./LICENSE) for more information.
+
+<div align="center">
+Built with dedication for athletes, lifters, and fitness enthusiasts worldwide.
+</div>

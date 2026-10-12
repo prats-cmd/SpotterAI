@@ -8,6 +8,6 @@ module.exports = (req, res) => {
         return;
     }
 
-    const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-    res.status(200).json({ ok: true, hasKey: !!GROQ_API_KEY, provider: 'Groq' });
+    const NEMOTRON_API_KEY = process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY || process.env.GROQ_API_KEY || '';
+    res.status(200).json({ ok: true, hasKey: !!NEMOTRON_API_KEY, provider: 'Nemotron' });
 };

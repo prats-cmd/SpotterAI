@@ -877,6 +877,153 @@
             line-height: 1.5;
         }
         .nutrition-voice-hint span { color: var(--volt); font-weight: 600; cursor: pointer; }
+
+        /* ── Memory Dashboard ───────────────────────────────────── */
+        .memory-dashboard {
+            width: 100%;
+            max-width: 520px;
+            margin-top: 28px;
+            background: var(--card-glass);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--line);
+            border-top: 3px solid var(--cyan);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .memory-header {
+            padding: 1rem 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--line);
+        }
+        .memory-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .memory-header-left .mem-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(6, 182, 212, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .memory-header h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--text);
+        }
+        .memory-header .mem-badge {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--cyan);
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .memory-body {
+            padding: 1.2rem 1.4rem;
+        }
+        .memory-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .mem-stat {
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .mem-stat-label {
+            font-size: 0.68rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .mem-stat-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .mem-stat-value.cyan { color: var(--cyan); }
+        .mem-stat-value.volt { color: var(--volt); }
+        .mem-stat-value.coral { color: var(--coral); }
+        .mem-stat-value.purple { color: var(--purple); }
+        .mem-user-id {
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+        .mem-user-id strong {
+            color: var(--text);
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.7rem;
+            display: block;
+            margin-bottom: 3px;
+        }
+        .mem-last-updated {
+            font-size: 0.7rem;
+            color: rgba(154,154,135,0.6);
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .mem-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .mem-btn {
+            flex: 1;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: var(--surface-2);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .mem-btn:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+        }
+        .mem-btn.danger {
+            border-color: rgba(255, 106, 77, 0.3);
+            color: var(--coral);
+        }
+        .mem-btn.danger:hover {
+            border-color: var(--coral);
+            background: rgba(255, 106, 77, 0.08);
+            box-shadow: 0 4px 12px rgba(255, 106, 77, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -914,7 +1061,7 @@
                 <div class="pulse-dot"></div>
                 <span class="app-name">Spotter Voice Coach</span>
             </div>
-            <div class="app-badge" id="aiModelBadge">Groq • GPT-OSS 120B</div>
+            <div class="app-badge" id="aiModelBadge">Nemotron • 550B</div>
         </div>
 
         <!-- Siri Fluid Avatar Stage -->
@@ -1130,6 +1277,48 @@
         Spotter provides athletic coaching & general fitness guidance. Not medical diagnosis. Consult a physician before new training programs or supplements.
     </p>
 
+    <!-- ──────────────────────────────────────────────────────────
+         MEMORY DASHBOARD
+    ────────────────────────────────────────────────────────── -->
+    <div class="memory-dashboard" id="memoryDashboard">
+        <div class="memory-header">
+            <div class="memory-header-left">
+                <div class="mem-icon">🧠</div>
+                <h3>Memory Dashboard</h3>
+            </div>
+            <div class="mem-badge" id="memBadge">Persistent</div>
+        </div>
+        <div class="memory-body">
+            <div class="mem-user-id">
+                <strong>Anonymous User ID</strong>
+                <span id="memUserId">Loading…</span>
+            </div>
+            <div class="memory-stats">
+                <div class="mem-stat">
+                    <span class="mem-stat-label">Workouts Saved</span>
+                    <span class="mem-stat-value cyan" id="memWorkoutCount">—</span>
+                </div>
+                <div class="mem-stat">
+                    <span class="mem-stat-label">Current Streak</span>
+                    <span class="mem-stat-value volt" id="memStreak">—</span>
+                </div>
+                <div class="mem-stat">
+                    <span class="mem-stat-label">Personal Records</span>
+                    <span class="mem-stat-value coral" id="memPRs">—</span>
+                </div>
+                <div class="mem-stat">
+                    <span class="mem-stat-label">Goal</span>
+                    <span class="mem-stat-value purple" id="memGoal" style="font-size:0.85rem">—</span>
+                </div>
+            </div>
+            <div class="mem-last-updated" id="memLastUpdated">Last updated: never</div>
+            <div class="mem-actions">
+                <button class="mem-btn" onclick="refreshMemoryDashboard()">↻ Refresh</button>
+                <button class="mem-btn danger" onclick="clearAllMemory()">🗑 Clear My Data</button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -1333,8 +1522,9 @@ async function processVoiceQuery(userText) {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
-                model: "meta/llama-3.3-70b-instruct",
+                model: "nvidia/nemotron-3-ultra-550b-a55b",
                 messages: chatHistory,
                 max_tokens: 200,
                 temperature: 0.65
@@ -1570,6 +1760,21 @@ function logSet() {
     const list = document.getElementById('session-list');
     list.innerHTML = setsLogged.map(s => `<div class="session-item"><span>${s.ex} — ${s.reps} reps</span><span class="rpe">RPE ${s.rpe}</span></div>`).join('');
 
+    // ── Save workout to persistent backend storage ──
+    fetch('/api/workout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+            exercise: ex,
+            sets: [{ reps: parseInt(reps), weightKg: 0 }],
+            fatigue: rpe >= 9 ? 'High' : rpe >= 7 ? 'Moderate' : 'Low'
+        })
+    }).then(() => {
+        refreshMemoryDashboard();
+        console.log('💾 Workout saved to memory');
+    }).catch(err => console.warn('Memory save failed:', err));
+
     // Voice cue feedback
     const cue = rpe >= 9
         ? `Top effort logged on ${ex}. Take a solid two-minute rest before the next round.`
@@ -1667,6 +1872,52 @@ if (synth) {
     }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// MEMORY DASHBOARD
+// ──────────────────────────────────────────────────────────────────────────────
+async function refreshMemoryDashboard() {
+    try {
+        const res = await fetch('/api/memory-status', {
+            cache: 'no-store',
+            credentials: 'include'
+        });
+        const data = await res.json();
+
+        document.getElementById('memUserId').textContent = data.userId || 'Unknown';
+        document.getElementById('memWorkoutCount').textContent = data.workoutCount ?? '0';
+        document.getElementById('memStreak').textContent = (data.streak ?? 0) + ' days';
+        document.getElementById('memPRs').textContent = data.personalRecords ?? '0';
+        document.getElementById('memGoal').textContent = data.profile?.goal || 'Not set';
+
+        if (data.lastUpdated) {
+            const d = new Date(data.lastUpdated);
+            document.getElementById('memLastUpdated').textContent =
+                'Last updated: ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+        } else {
+            document.getElementById('memLastUpdated').textContent = 'Last updated: never';
+        }
+
+        const badge = document.getElementById('memBadge');
+        badge.textContent = data.exists ? 'Persistent' : 'New User';
+    } catch (e) {
+        document.getElementById('memUserId').textContent = 'Server offline';
+    }
+}
+
+async function clearAllMemory() {
+    if (!confirm('This will permanently delete all your saved workouts, records, and preferences. Continue?')) return;
+    try {
+        await fetch('/api/clear-data', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        addMessage('🗑 All your saved data has been cleared. Starting fresh!', 'ai');
+        refreshMemoryDashboard();
+    } catch (e) {
+        addMessage('⚠️ Could not clear data. Is the server running?', 'ai');
+    }
+}
+
 // Connectivity check
 (async function checkServer() {
     if (location.protocol === 'file:') {
@@ -1678,12 +1929,14 @@ if (synth) {
     }
 
     try {
-        const res = await fetch('/api/health', { cache: 'no-store' });
+        const res = await fetch('/api/health', { cache: 'no-store', credentials: 'include' });
         const data = await res.json();
         if (!data.hasKey) {
             serverBanner.style.display = 'block';
-            serverBanner.innerHTML = "⚠️ Server is running but no NVIDIA API key found in <b>config.json</b>. Check config and restart.";
+            serverBanner.innerHTML = "⚠️ Server is running but no API key found in <b>config.json</b>. Check config and restart.";
         }
+        // Load memory dashboard
+        refreshMemoryDashboard();
     } catch (e) {
         serverBanner.style.display = 'block';
         serverBanner.innerHTML = "⚠️ Can't reach server. Make sure it's running: <code style='background:rgba(0,0,0,0.15);padding:2px 6px;border-radius:4px'>node server.js</code>";
