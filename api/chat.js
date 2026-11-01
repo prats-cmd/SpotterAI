@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
     if (!NEMOTRON_API_KEY) {
         res.status(500).json({
             error: 'NEMOTRON_API_KEY not configured',
-            hint: 'Add NEMOTRON_API_KEY or NVIDIA_API_KEY to your Vercel Project Settings > Environment Variables.'
+            hint: 'Set NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel Project Settings > Environment Variables (or config.json for local dev).'
         });
         return;
     }
@@ -105,7 +105,7 @@ module.exports = async (req, res) => {
         res.status(lastResult?.status || 500).json({
             error: errMsg,
             hint: lastResult?.status === 401
-                ? 'Invalid API key — check build.nvidia.com'
+                ? 'Invalid NVIDIA API key — check NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel env vars.'
                 : lastResult?.status === 429
                 ? 'Rate limited — wait a moment and try again.'
                 : 'Check logs for full error details.'

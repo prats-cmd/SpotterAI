@@ -10,7 +10,7 @@ const nutritionPlan = require('./services/nutrition-plan');
 
 const PORT = 3000;
 
-// ── API key ──────────────────────────────────────────────────────────────────
+// ── API key ─────────────────────────────────────────────────────────────
 let NEMOTRON_API_KEY = process.env.NEMOTRON_API_KEY || process.env.NVIDIA_API_KEY || process.env.GROQ_API_KEY || '';
 try {
     const configPath = fs.existsSync(path.join(__dirname, 'config.json'))
@@ -34,7 +34,7 @@ const MODELS = [
     'openai/gpt-oss-20b'
 ];
 
-// ── Cookie helpers ───────────────────────────────────────────────────────────
+// ── Cookie helpers ──────────────────────────────────────────────────────────
 function parseCookies(cookieHeader) {
     const cookies = {};
     if (!cookieHeader) return cookies;
@@ -103,7 +103,7 @@ function nemotronRequest(payload) {
     });
 }
 
-// ── HTTP server ──────────────────────────────────────────────────────────────
+// ── HTTP server ─────────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
     // CORS — allow credentials for cookie support
     const origin = req.headers.origin || '*';
@@ -115,7 +115,7 @@ const server = http.createServer(async (req, res) => {
 
     const url = req.url.split('?')[0];
 
-    // ── Health check ─────────────────────────────────────────────────────────
+    // ── Health check ────────────────────────────────────────────────────────
     if (url === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, hasKey: !!NEMOTRON_API_KEY, provider: 'Nemotron', memory: true }));
@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 error: 'NEMOTRON_API_KEY not configured',
-                hint: 'Add it to config.json (or NEMOTRON_API_KEY env) and restart.'
+                hint: 'Set NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel environment variables (or add it to config.json for local dev).'
             }));
             return;
         }
@@ -176,7 +176,7 @@ const server = http.createServer(async (req, res) => {
             res.end(JSON.stringify({
                 error: errMsg,
                 hint: lastResult?.status === 401
-                    ? 'Invalid API key — check build.nvidia.com'
+                    ? 'Invalid NVIDIA API key — check NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel env vars.'
                     : lastResult?.status === 429
                     ? 'Rate limited — wait a moment and try again.'
                     : 'Check the terminal for full error details.'
@@ -253,7 +253,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 error: 'NEMOTRON_API_KEY not configured',
-                hint: 'Add it to config.json (or NEMOTRON_API_KEY env) and restart.'
+                hint: 'Set NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel environment variables (or add it to config.json for local dev).'
             }));
             return;
         }
@@ -261,12 +261,10 @@ const server = http.createServer(async (req, res) => {
         // ── Inject saved user context into the system prompt ─────────────
         const savedContext = memory.buildContextForAI(userId);
         if (savedContext && payload.messages && payload.messages.length > 0) {
-            // Find the system message and append context
             const sysIdx = payload.messages.findIndex(m => m.role === 'system');
             if (sysIdx >= 0) {
                 payload.messages[sysIdx].content += savedContext;
             } else {
-                // Prepend a system message with context
                 payload.messages.unshift({
                     role: 'system',
                     content: 'You are Spotter, an AI fitness coach.' + savedContext
@@ -274,7 +272,6 @@ const server = http.createServer(async (req, res) => {
             }
         }
 
-        // Try each model until one succeeds
         let lastResult = null, lastData = null;
         try {
             for (const model of MODELS) {
@@ -286,7 +283,6 @@ const server = http.createServer(async (req, res) => {
                 if (result.status >= 200 && result.status < 300) {
                     console.log(`✓ Model: ${model} | User: ${userId.slice(0, 16)}…`);
 
-                    // ── Extract and save workout data from AI response ───
                     try {
                         const aiReply = data.choices?.[0]?.message?.content || '';
                         const userMsg = payload.messages?.[payload.messages.length - 1]?.content || '';
@@ -307,18 +303,16 @@ const server = http.createServer(async (req, res) => {
                 console.log(`✗ ${model} → HTTP ${result.status}: ${result.body.slice(0, 120)}`);
                 lastResult = result;
                 lastData = data;
-                // Only keep probing on model-not-found errors; stop on auth/rate-limit
                 if (result.status === 401 || result.status === 429) break;
             }
 
-            // All models failed
             const errMsg = lastData?.error?.message || lastResult?.body || 'All models failed';
             console.error('All Nemotron models failed. Last error:', errMsg);
             res.writeHead(lastResult?.status || 500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 error: errMsg,
                 hint: lastResult?.status === 401
-                    ? 'Invalid API key — check build.nvidia.com'
+                    ? 'Invalid NVIDIA API key — check NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel env vars.'
                     : lastResult?.status === 429
                     ? 'Rate limited — wait a moment and try again.'
                     : 'Check the terminal for full error details.'
@@ -332,7 +326,6 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
-    // ── Static files ─────────────────────────────────────────────────────────
     let filePath;
     if (url === '/' || url === '/index.html' || url === '/index_spotter.html') {
         filePath = path.join(__dirname, 'public', 'index.html');
@@ -340,7 +333,6 @@ const server = http.createServer(async (req, res) => {
             filePath = path.join(__dirname, 'index.html');
         }
     } else {
-        // Serve from public/ directory or project root
         const safeName = path.basename(url);
         if (safeName === 'config.json') { res.writeHead(403); res.end('Forbidden'); return; }
         filePath = path.join(__dirname, 'public', safeName);
@@ -366,12 +358,9 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404); res.end('Not Found');
 });
 
-// ── Extract workout data from conversation ───────────────────────────────────
-// Pattern-matches user messages for workout logging intent
 async function extractAndSaveWorkoutData(userId, userMsg, aiReply) {
     const lower = userMsg.toLowerCase();
 
-    // Detect workout logging patterns
     const workoutPatterns = [
         /(?:i\s+)?(?:just\s+)?did\s+(\d+)\s*(?:sets?\s+(?:of\s+)?)?(\d+)\s*reps?\s+(?:of\s+)?(.+?)(?:\s+(?:at|with|@)\s+(\d+(?:\.\d+)?)\s*(?:kg|lbs?|pounds?))?/i,
         /(?:logged?|completed?|finished)\s+(.+?)[\s:,]+(\d+)\s*(?:sets?)?\s*[x×]\s*(\d+)\s*(?:reps?)?\s*(?:(?:at|@|with)\s+(\d+(?:\.\d+)?)\s*(?:kg|lbs?)?)?/i,
@@ -381,7 +370,6 @@ async function extractAndSaveWorkoutData(userId, userMsg, aiReply) {
     for (const pattern of workoutPatterns) {
         const match = lower.match(pattern);
         if (match) {
-            // Normalize — different patterns capture in different orders
             let exercise, sets, reps, weight;
 
             if (pattern === workoutPatterns[0]) {
@@ -396,7 +384,6 @@ async function extractAndSaveWorkoutData(userId, userMsg, aiReply) {
                 weight = parseFloat(match[4]) || 0;
             }
 
-            // Build sets array
             const setsArray = [];
             for (let i = 0; i < sets; i++) {
                 setsArray.push({ reps, weightKg: weight });
@@ -412,7 +399,6 @@ async function extractAndSaveWorkoutData(userId, userMsg, aiReply) {
         }
     }
 
-    // Also detect profile updates from conversation
     const goalPatterns = [
         /(?:my\s+)?goal\s+is\s+(?:to\s+)?(.+)/i,
         /(?:i\s+want\s+to|i'm\s+trying\s+to)\s+(.+)/i
