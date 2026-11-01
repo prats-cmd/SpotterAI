@@ -381,9 +381,11 @@ docker run -d -p 3000:3000 -e NEMOTRON_API_KEY="nvapi-..." --name spotter spotte
 ### Option 3: Vercel Serverless
 The repository includes pre-configured [`vercel.json`](./vercel.json) and serverless handlers in [`api/`](./api/):
 1. Import repository to Vercel.
-2. In Project Settings > Environment Variables, add:
-   - `NEMOTRON_API_KEY`: `nvapi-YOUR_KEY_HERE`
-3. Deploy.
+2. In **Project Settings > Environment Variables**, add either `NEMOTRON_API_KEY` or `NVIDIA_API_KEY` with a valid NVIDIA API key.
+3. Redeploy the project so the environment variable is available to the serverless functions.
+4. Confirm the key is active in your NVIDIA developer account.
+
+Do not rely on `config.json` in Vercel; that file is for local development. Set the key in Vercel's project environment settings.
 
 ---
 
