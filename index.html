@@ -2306,16 +2306,64 @@ async function processVoiceQuery(userText) {
 // Show / hide API error banner
 function showApiError(msg, status) {
     let banner = document.getElementById('apiBanner');
+
+    // Create the error banner only once
     if (!banner) {
         banner = document.createElement('div');
         banner.id = 'apiBanner';
-        banner.style.cssText = 'background:#FF6A4D;color:#0E0F0A;font-size:13px;font-weight:700;padding:9px 16px;text-align:center;border-radius:8px;margin:0 1.25rem 0.5rem;line-height:1.4;';
+
+        banner.style.cssText = `
+            background: #FF6A4D;
+            color: #0E0F0A;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 9px 16px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 0 1.25rem 0.5rem;
+            line-height: 1.4;
+            position: relative;
+            z-index: 1000;
+        `;
+
+        banner.setAttribute('role', 'alert');
+
+        // Safely find the bottom action bar
         const bar = document.querySelector('.bottom-action-bar');
-        bar.parentNode.insertBefore(banner, bar);
+
+        if (bar && bar.parentNode) {
+            bar.parentNode.insertBefore(banner, bar);
+        } else {
+            // Fallback when the action bar doesn't exist
+            document.body.prepend(banner);
+        }
     }
+
+    // Handle numeric and string HTTP status codes
+    const errorStatus = Number(status);
+
+    let errorMessage = msg || 'An unexpected API error occurred.';
+
+    if (errorStatus === 401) {
+        errorMessage =
+            'Invalid NVIDIA API key. Set NEMOTRON_API_KEY or NVIDIA_API_KEY in Vercel Environment Variables.';
+    } else if (errorStatus === 429) {
+        errorMessage =
+            'Rate limit exceeded or NVIDIA API credits exhausted. Please try again later.';
+    }
+
     banner.style.display = 'block';
-    banner.textContent = '⚠️ ' + (status === 401 ? 'Invalid API key — check config.json.' : status === 429 ? 'Rate limited or out of NVIDIA credits.' : msg);
-    addMessage('⚠️ ' + banner.textContent, 'ai');
+    banner.textContent = '⚠️ ' + errorMessage;
+
+    // Display the error in the chat if addMessage is available
+    if (typeof addMessage === 'function') {
+        addMessage('⚠️ ' + errorMessage, 'ai');
+    }
+
+    console.error('API Error:', {
+        status: errorStatus,
+        message: errorMessage
+    });
 }
 
 function hideApiError() {
