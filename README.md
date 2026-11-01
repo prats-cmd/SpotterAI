@@ -21,10 +21,12 @@
 **Spotter AI** is an AI-powered fitness companion engineered to bridge the gap between static workout trackers and human personal trainers. It pairs an animated conversational voice user interface with an atomic, zero-database memory engine and an enterprise LLM proxy routing directly to **NVIDIA NIM (Nemotron)**.
 
 ### Key Highlights
-- **🎙️ Real-time Voice & Visual Feedback**: Fluid, responsive Siri-style audio orb and real-time Web Speech recognition with speech synthesis feedback.
+- **🎙️ Real-time Voice & Visual Feedback**: A full-turn rotating, fluid-color orb (honors reduced-motion preferences); English (India)/Hindi voice selection; spoken replies with tap/keyboard interruption; and browser-native speech recognition where supported.
 - **⚡ NVIDIA Nemotron Flagship Intelligence**: High-throughput chat completions driven by `nvidia/nemotron-3-ultra-550b-a55b` with multi-tier failover.
 - **🧠 Frictionless Persistent Memory**: Anonymous, cookie-anchored state tracking (`spotter_sid`) retaining fitness goals, personal records (PRs), workout volume, and active streaks across sessions without requiring logins or database overhead.
 - **🔄 Conversational Intent & Workout Extraction**: Automated pattern recognition parses conversational logs (e.g., *"Did 3 sets of 10 bench press at 80kg"*) into structured workout logs on the fly.
+- **🥗 Session-Only Meal Drafts**: Creates a seven-day, non-clinical meal-idea draft for adult review and prints it to PDF. Health details are sent to the configured AI provider for that request and are not saved to Spotter's profile or workout memory.
+- **🛒 Preference-Based Product Links**: Nutrition guidance can link to Amazon India product searches for whey, plant-based protein, and supplements. Links are search results, not endorsements; Spotter should match products to stated preferences and avoid claiming medical suitability.
 - **🛡️ Secure Gateway**: Server-side credential isolation ensuring raw API tokens never touch browser runtime. Zero external NPM runtime dependencies.
 
 ---
@@ -186,8 +188,8 @@ SpotterAI-main/
 
 ### 1. Clone & Setup
 ```bash
-git clone https://github.com/your-username/SpotterAI-main.git
-cd SpotterAI-main
+git clone https://github.com/prats-cmd/SpotterAI.git
+cd SpotterAI
 ```
 
 ### 2. Configure Your API Key
@@ -209,15 +211,21 @@ $env:NEMOTRON_API_KEY="nvapi-YOUR_NVIDIA_API_KEY_HERE"
 
 ### 3. Launch the Application
 ```bash
-node server.js
-```
-*Or using npm:*
-```bash
 npm start
+```
+The server listens on port `3000`. To run the automated tests:
+```bash
+npm test
 ```
 
 ### 4. Access the Dashboard
-Navigate to **`http://localhost:3000`** in any modern web browser (Google Chrome, Edge, Safari).
+Navigate to **`http://localhost:3000`** in a modern browser. Text coaching works independently; live voice input depends on browser support for the Web Speech Recognition API, microphone permission, and a secure context (HTTPS or localhost). Speech recognition may also depend on the browser vendor's online speech service, so typed chat remains available if that service is unavailable.
+
+### Voice controls and browser support
+- Select **English (India)** or **हिन्दी** in the voice coach before starting a voice session.
+- Tap the orb or **Start Voice Assistant** to explicitly request microphone access. Tap the orb again, press **Escape**, or use **Stop speaking** to interrupt spoken replies; the main control ends the voice session.
+- Quick prompts and typed chat do not enable the microphone.
+- Web Speech Recognition support and its online speech service vary by browser and device. Use HTTPS when hosting the app; `localhost` is also a secure context for local development. If voice recognition is unavailable, use the text input.
 
 ---
 
@@ -291,6 +299,11 @@ Proxies prompts to NVIDIA Nemotron, injects historical memory, and extracts work
 - **Response Headers**:
   - `X-Model-Used`: `nvidia/nemotron-3-ultra-550b-a55b`
   - `X-Spotter-User`: `spotter-d1fcb87d...`
+
+### `POST /api/diet-plan`
+Creates a seven-day general meal-idea draft without reading or writing the user's Spotter memory. The request requires an adult profile, confirmation that a general plan is appropriate, and explicit consent to send the details to the configured AI provider. Health details are used only for that request and are not saved by Spotter. The response uses the same OpenAI-compatible chat-completion shape as `/api/chat`.
+
+This feature does not calculate nutrient prescriptions or provide medical advice. The generated meal ideas are not physician-approved and should be reviewed with a physician or registered dietitian. The PDF is produced through the browser's print dialog.
 
 ---
 

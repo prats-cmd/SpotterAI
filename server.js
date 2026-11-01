@@ -6,6 +6,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const memory = require('./services/memory');
+const nutritionPlan = require('./services/nutrition-plan');
 
 const PORT = 3000;
 
@@ -118,6 +119,73 @@ const server = http.createServer(async (req, res) => {
     if (url === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, hasKey: !!NEMOTRON_API_KEY, provider: 'Nemotron', memory: true }));
+        return;
+    }
+
+    // ── Session-only weekly meal-idea draft ──────────────────────────────────
+    if (url === '/api/diet-plan' && req.method === 'POST') {
+        let profile;
+        try {
+            profile = nutritionPlan.validatePlanInput(await parseBody(req));
+        } catch (error) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: error.message }));
+            return;
+        }
+
+        if (!NEMOTRON_API_KEY) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'NEMOTRON_API_KEY not configured',
+                hint: 'Add it to config.json (or NEMOTRON_API_KEY env) and restart.'
+            }));
+            return;
+        }
+
+        let lastResult = null;
+        let lastData = null;
+        try {
+            const payload = {
+                messages: nutritionPlan.createPlanMessages(profile),
+                max_tokens: 1200,
+                temperature: 0.35
+            };
+
+            for (const model of MODELS) {
+                payload.model = model;
+                const result = await nemotronRequest(payload);
+                let data;
+                try { data = JSON.parse(result.body); } catch (error) { data = { raw: result.body }; }
+
+                if (result.status >= 200 && result.status < 300) {
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json',
+                        'X-Model-Used': model
+                    });
+                    res.end(JSON.stringify(data));
+                    return;
+                }
+
+                lastResult = result;
+                lastData = data;
+                if (result.status === 401 || result.status === 429) break;
+            }
+
+            const errMsg = lastData?.error?.message || lastResult?.body || 'All models failed';
+            res.writeHead(lastResult?.status || 500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: errMsg,
+                hint: lastResult?.status === 401
+                    ? 'Invalid API key — check build.nvidia.com'
+                    : lastResult?.status === 429
+                    ? 'Rate limited — wait a moment and try again.'
+                    : 'Check the terminal for full error details.'
+            }));
+        } catch (error) {
+            console.error('Diet-plan network error:', error.message);
+            res.writeHead(502, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Could not reach Nemotron API', details: error.message }));
+        }
         return;
     }
 

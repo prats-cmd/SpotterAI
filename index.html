@@ -232,8 +232,26 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0;
+            border: 0;
+            color: inherit;
+            background: transparent;
+            appearance: none;
             cursor: pointer;
             user-select: none;
+        }
+
+        .siri-orb-container::before {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(69,224,208,.88) 48deg, rgba(215,255,70,.95) 92deg, rgba(167,139,250,.72) 145deg, transparent 190deg, transparent 360deg);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+            animation: orbit-rotation 5s linear infinite;
+            pointer-events: none;
         }
 
         /* Ambient background glow */
@@ -251,6 +269,7 @@
 
         /* Primary Siri Fluid Morphing Sphere */
         .siri-orb {
+            --orb-spin-duration: 6s;
             position: relative;
             width: 128px;
             height: 128px;
@@ -272,10 +291,21 @@
             animation: fluid-idle 6s ease-in-out infinite alternate;
         }
 
+        .siri-orb::before {
+            content: '';
+            position: absolute;
+            z-index: 0;
+            inset: 0;
+            border-radius: inherit;
+            background: conic-gradient(from 0deg, #D4FF3F, #06B6D4 22%, #8B5CF6 46%, #FF6A4D 70%, #10B981 86%, #D4FF3F);
+            animation: orb-color-turn var(--orb-spin-duration) linear infinite;
+        }
+
         /* Inner reflective 3D layer */
         .siri-orb::after {
             content: '';
             position: absolute;
+            z-index: 1;
             inset: 6px;
             border-radius: 50%;
             background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.1) 40%, rgba(0, 0, 0, 0.6) 80%);
@@ -301,6 +331,7 @@
             background: radial-gradient(circle, #D4FF3F, #06B6D4, #10B981);
         }
         .state-listening .siri-orb {
+            --orb-spin-duration: 2.8s;
             transform: scale(1.14);
             animation: fluid-listening 1.8s ease-in-out infinite alternate;
             box-shadow: inset 0 0 28px rgba(255, 255, 255, 1),
@@ -319,6 +350,7 @@
             transform: scale(1.15);
         }
         .state-thinking .siri-orb {
+            --orb-spin-duration: 2.2s;
             animation: fluid-spin 1.4s linear infinite;
             filter: blur(2.5px);
         }
@@ -331,6 +363,7 @@
             background: radial-gradient(circle, #D4FF3F, #FF6A4D, #8B5CF6);
         }
         .state-speaking .siri-orb {
+            --orb-spin-duration: 1.8s;
             animation: fluid-speaking 0.75s ease-in-out infinite alternate;
             box-shadow: inset 0 0 32px rgba(255, 255, 255, 1),
                         0 0 55px rgba(212, 255, 63, 0.8),
@@ -365,6 +398,14 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes orb-color-turn {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes orbit-rotation {
+            to { transform: rotate(360deg); }
+        }
+
         @keyframes ripple-ring {
             0% { transform: scale(0.9); opacity: 0.9; }
             100% { transform: scale(1.55); opacity: 0; }
@@ -386,6 +427,39 @@
             font-size: 0.8rem;
             color: var(--muted);
             text-align: center;
+        }
+
+        .voice-interrupt {
+            min-height: 44px;
+            margin-top: 12px;
+            padding: 8px 14px;
+            border: 1px solid rgba(255,106,77,.45);
+            border-radius: 999px;
+            color: #ffd2c9;
+            background: rgba(255,106,77,.1);
+            font: inherit;
+            font-size: .78rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .voice-interrupt:hover { background: rgba(255,106,77,.2); }
+        .voice-interrupt[hidden] { display: none; }
+        .voice-language-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: .75rem;
+        }
+        .voice-language-control select {
+            min-height: 44px;
+            padding: 8px 32px 8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--text);
+            background: var(--surface-2);
+            font: inherit;
         }
 
         /* Animated Sound Waveform Bars */
@@ -466,6 +540,17 @@
             border-bottom-left-radius: 0.3rem;
             border: 1px solid rgba(242, 240, 228, 0.08);
         }
+
+        .formatted-content p { margin: 0 0 0.55rem; }
+        .formatted-content p:last-child { margin-bottom: 0; }
+        .formatted-content ul, .formatted-content ol {
+            margin: 0.15rem 0 0.55rem;
+            padding-left: 1.2rem;
+        }
+        .formatted-content li { padding-left: 0.1rem; margin: 0 0 0.3rem; }
+        .formatted-content li:last-child { margin-bottom: 0; }
+        .formatted-content strong { color: var(--volt); font-weight: 800; }
+        .formatted-content a { color: var(--cyan); text-decoration: underline; text-underline-offset: 2px; }
 
         /* Voice Suggested Prompts */
         .quick-cues {
@@ -878,6 +963,144 @@
         }
         .nutrition-voice-hint span { color: var(--volt); font-weight: 600; cursor: pointer; }
 
+        .product-links-card { margin-top: 16px; }
+        .product-links-card > p {
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            margin: -4px 0 12px;
+        }
+        .product-link-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+        .product-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-height: 46px;
+            padding: 10px 12px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            background: var(--surface-2);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .product-link:hover { border-color: var(--volt); color: var(--volt); }
+        .product-link span:last-child { color: var(--volt); white-space: nowrap; }
+
+        .diet-plan-card { margin-bottom: 16px; }
+        .diet-plan-intro, .diet-plan-warning {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+        .diet-plan-warning {
+            border-left: 3px solid var(--coral);
+            padding: 9px 12px;
+            background: rgba(255,106,77,0.08);
+        }
+        .diet-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .diet-field { display: flex; flex-direction: column; gap: 6px; }
+        .diet-field label { color: var(--muted); font-size: 0.76rem; font-weight: 700; }
+        .diet-field input, .diet-field select {
+            width: 100%;
+            min-height: 42px;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            padding: 9px 11px;
+            font: inherit;
+            font-size: 0.84rem;
+        }
+        .diet-field input:focus, .diet-field select:focus { outline: 1px solid var(--volt); }
+        .diet-field.full-width { grid-column: 1 / -1; }
+        .diet-consent {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+        .diet-consent input { margin-top: 3px; accent-color: var(--volt); }
+        .diet-submit, .diet-print-button {
+            background: var(--volt);
+            color: var(--ink);
+            border: 0;
+            border-radius: 999px;
+            padding: 11px 18px;
+            margin-top: 16px;
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .diet-submit:disabled { opacity: 0.55; cursor: wait; }
+        .diet-reset-button {
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--text);
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin: 16px 0 0 8px;
+            padding: 10px 16px;
+        }
+        .diet-status { min-height: 1.4em; margin-top: 12px; color: var(--muted); font-size: 0.8rem; }
+        .diet-status.error { color: var(--coral); }
+        .diet-result {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid var(--line);
+        }
+        .diet-result h3 { font-family: 'Oswald', sans-serif; margin-bottom: 8px; }
+        .diet-profile-summary { color: var(--muted); font-size: 0.77rem; margin-bottom: 12px; }
+        .diet-result .formatted-content {
+            color: var(--text);
+            font: inherit;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+        #dietPrintView { display: none; }
+
+        @media (max-width: 600px) {
+            .diet-form-grid { grid-template-columns: 1fr; }
+            .diet-field.full-width { grid-column: auto; }
+            .product-link-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            @page { margin: 18mm; }
+            body { display: block; min-height: 0; background: #fff; color: #111; }
+            body > *:not(#dietPrintView) { display: none !important; }
+            #dietPrintView {
+                display: block !important;
+                color: #111;
+                font: 11pt/1.5 Arial, sans-serif;
+            }
+            #dietPrintView h1 { font-size: 21pt; margin-bottom: 5mm; }
+            #dietPrintView h2 { font-size: 13pt; margin: 7mm 0 2mm; }
+            #dietPrintView p { margin: 2mm 0; }
+            #dietPrintMeta { margin-bottom: 6mm; }
+            #dietPrintPlan { overflow-wrap: anywhere; font: 10.5pt/1.5 Arial, sans-serif; }
+            #dietPrintView a { color: #111; }
+        }
+
         /* ── Memory Dashboard ───────────────────────────────────── */
         .memory-dashboard {
             width: 100%;
@@ -1025,6 +1248,401 @@
             box-shadow: 0 4px 12px rgba(255, 106, 77, 0.15);
         }
     </style>
+    <style>
+        :root {
+            --ink: #080a0b;
+            --surface: #111518;
+            --surface-2: #191f22;
+            --card-glass: rgba(15, 20, 22, 0.94);
+            --line: rgba(224, 238, 230, 0.11);
+            --text: #f2f5ef;
+            --muted: #9aa8a5;
+            --volt: #d7ff46;
+            --volt-glow: rgba(215, 255, 70, 0.28);
+            --cyan: #45e0d0;
+            --coral: #ff8469;
+            --purple: #a78bfa;
+            --pink: #ef78bd;
+            --radius-sm: 12px;
+            --radius-md: 20px;
+            --radius-lg: 28px;
+            color-scheme: dark;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            align-items: stretch;
+            background:
+                radial-gradient(ellipse at 82% 4%, rgba(35, 83, 76, 0.22), transparent 34rem),
+                radial-gradient(ellipse at 7% 25%, rgba(107, 71, 143, 0.13), transparent 30rem),
+                #080a0b;
+            color: var(--text);
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.17;
+            background-image: linear-gradient(rgba(220,240,230,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(220,240,230,.04) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: linear-gradient(to bottom, black, transparent 82%);
+        }
+        #serverBanner { position: relative; }
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            width: 100%;
+            max-width: none;
+            min-height: 78px;
+            padding: 12px max(24px, calc((100vw - 1280px) / 2));
+            gap: 24px;
+            background: rgba(8, 10, 11, 0.82);
+            border-bottom: 1px solid rgba(224, 238, 230, 0.09);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        .wordmark {
+            gap: 11px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.06em;
+        }
+        .wordmark svg { width: 30px; height: 30px; filter: drop-shadow(0 0 10px rgba(215,255,70,.36)); }
+        .mode-pills {
+            gap: 5px;
+            padding: 5px;
+            border-radius: 15px;
+            background: rgba(255,255,255,.035);
+            border-color: rgba(255,255,255,.08);
+        }
+        .pill-btn {
+            min-height: 42px;
+            padding: 9px 16px;
+            border-radius: 11px;
+            color: #a5b0ae;
+            transition: color .2s ease, background .2s ease, transform .2s ease;
+        }
+        .pill-btn:hover { color: #fff; transform: translateY(-1px); }
+        .pill-btn.active {
+            color: var(--volt);
+            background: rgba(215,255,70,.1);
+            box-shadow: inset 0 0 0 1px rgba(215,255,70,.2);
+        }
+        .main-container {
+            width: min(100% - 48px, 1280px);
+            max-width: none;
+            align-items: stretch;
+            gap: 24px;
+            margin: 0 auto;
+            padding: 40px 0 76px;
+        }
+        .experience-hero {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            overflow: hidden;
+            min-height: 180px;
+            padding: 26px 34px;
+            border: 1px solid rgba(228,240,232,.11);
+            border-radius: var(--radius-lg);
+            background:
+                radial-gradient(ellipse at 88% 120%, rgba(215,255,70,.14), transparent 23rem),
+                linear-gradient(115deg, rgba(22,31,31,.96), rgba(15,20,22,.92) 58%, rgba(25,23,34,.86));
+            animation: hero-arrive .7s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .experience-hero::after {
+            content: '';
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: 7%;
+            top: -160px;
+            border: 1px solid rgba(215,255,70,.19);
+            border-radius: 50%;
+            box-shadow: 0 0 0 28px rgba(215,255,70,.025), 0 0 0 58px rgba(69,224,208,.025);
+            pointer-events: none;
+        }
+        .hero-copy { position: relative; z-index: 1; max-width: 720px; }
+        .hero-eyebrow, .section-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--volt);
+            font-size: .68rem;
+            font-weight: 800;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }
+        .hero-eyebrow::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--volt);
+            box-shadow: 0 0 13px var(--volt);
+            animation: live-blink 2s infinite ease-in-out;
+        }
+        .experience-hero h1 {
+            margin: 13px 0 8px;
+            color: #f5f7f1;
+            font-family: 'Oswald', sans-serif;
+            font-size: clamp(2.3rem, 5vw, 4.2rem);
+            font-weight: 600;
+            line-height: .98;
+            letter-spacing: -.025em;
+            text-transform: uppercase;
+        }
+        .experience-hero h1 span { color: var(--volt); }
+        .experience-hero p { color: #aab8b3; font-size: .93rem; line-height: 1.65; }
+        .hero-side-note {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 6px;
+            min-width: 175px;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 15px;
+            background: rgba(4,8,9,.35);
+        }
+        .hero-side-note strong { color: #f5f7f1; font-size: .78rem; }
+        .hero-side-note span { color: var(--muted); font-size: .68rem; }
+        .hero-side-note .hero-note-live { color: var(--cyan); }
+
+        .voice-card {
+            display: grid;
+            grid-template-columns: minmax(330px, .92fr) minmax(0, 1.08fr);
+            grid-template-rows: auto auto minmax(210px, 1fr) auto;
+            width: 100%;
+            max-width: none;
+            min-height: 620px;
+            overflow: hidden;
+            border: 1px solid rgba(224,238,230,.12);
+            border-top: 1px solid rgba(224,238,230,.12);
+            border-radius: var(--radius-lg);
+            background:
+                radial-gradient(ellipse at 18% 70%, rgba(96,61,132,.12), transparent 24rem),
+                linear-gradient(145deg, rgba(19,25,27,.98), rgba(12,16,18,.98));
+            box-shadow: 0 35px 100px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.035);
+        }
+        .card-header {
+            grid-column: 1 / -1;
+            padding: 16px 24px;
+            border-bottom-color: rgba(255,255,255,.08);
+        }
+        .app-name { font-family: 'Manrope', sans-serif; font-size: .84rem; font-weight: 800; letter-spacing: -.01em; }
+        .app-badge { border-radius: 8px; }
+        .avatar-stage {
+            grid-column: 1;
+            grid-row: 2 / 5;
+            min-height: 480px;
+            padding: 42px 25px;
+            overflow: hidden;
+            border-right: 1px solid rgba(255,255,255,.07);
+            background:
+                radial-gradient(ellipse at 50% 44%, rgba(75,84,86,.19), transparent 13rem),
+                linear-gradient(180deg, rgba(255,255,255,.014), transparent);
+        }
+        .avatar-stage::before {
+            content: '';
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            top: 50%;
+            left: 50%;
+            border: 1px solid rgba(255,255,255,.055);
+            border-radius: 50%;
+            transform: translate(-50%,-55%);
+            pointer-events: none;
+        }
+        .avatar-stage::after {
+            content: 'SPOTTER / LIVE COACH';
+            position: absolute;
+            top: 26px;
+            left: 25px;
+            color: rgba(189,205,198,.48);
+            font-size: .61rem;
+            font-weight: 800;
+            letter-spacing: .15em;
+        }
+        .siri-orb-container { z-index: 1; width: 230px; height: 230px; margin-top: 32px; }
+        /* Preserve the original animated, morphing multicolor orb. */
+        .status-heading { z-index: 1; margin-top: 1.7rem; font-size: 1.3rem; }
+        .status-sub { z-index: 1; max-width: 280px; line-height: 1.6; }
+        .waveform { z-index: 1; margin-top: 1rem; }
+        .quick-cues {
+            grid-column: 2;
+            grid-row: 2;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 20px 24px 12px;
+            overflow: visible;
+        }
+        .quick-cues::before {
+            content: 'QUICK START';
+            width: 100%;
+            margin-bottom: 2px;
+            color: #83928d;
+            font-size: .62rem;
+            font-weight: 800;
+            letter-spacing: .16em;
+        }
+        .cue-chip {
+            min-height: 38px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border-color: rgba(255,255,255,.09);
+            background: rgba(255,255,255,.035);
+            color: #c1cbc6;
+        }
+        .cue-chip:hover { transform: translateY(-2px); background: rgba(215,255,70,.08); }
+        .conversation-panel {
+            grid-column: 2;
+            grid-row: 3;
+            max-height: none;
+            min-height: 210px;
+            margin: 2px 24px 0;
+            padding: 18px 4px 14px;
+            border-top: 1px solid rgba(255,255,255,.08);
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            background: transparent;
+        }
+        .msg-bubble { max-width: 92%; border-radius: 15px; }
+        .msg-bubble.ai { background: rgba(255,255,255,.055); border-color: rgba(255,255,255,.08); }
+        .msg-bubble.user { background: rgba(215,255,70,.09); border-color: rgba(215,255,70,.2); }
+        .bottom-action-bar {
+            grid-column: 2;
+            grid-row: 4;
+            align-items: stretch;
+            padding: 16px 24px 22px;
+        }
+        .action-button { min-height: 54px; border-radius: 14px; }
+        .text-input-row { gap: 10px; }
+        .text-input-row input { min-height: 48px; border-radius: 13px; background: rgba(255,255,255,.045); }
+        .text-input-row button { min-width: 86px; border-radius: 13px; }
+
+        .tools-view {
+            max-width: none;
+            grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+            gap: 20px;
+            margin: 0;
+            animation: hero-arrive .45s ease both;
+        }
+        .tool-card, .nutrition-card {
+            border: 1px solid rgba(224,238,230,.11);
+            border-top: 1px solid rgba(224,238,230,.11);
+            border-radius: var(--radius-md);
+            background: linear-gradient(145deg, rgba(20,27,29,.97), rgba(14,19,21,.97));
+            box-shadow: 0 18px 50px rgba(0,0,0,.18);
+        }
+        .tool-card { padding: clamp(20px, 3vw, 32px); }
+        .tool-card h3, .nutrition-card h3 { font-family: 'Manrope', sans-serif; font-weight: 800; letter-spacing: -.025em; }
+        .field select, .field input[type=number] {
+            min-height: 46px;
+            border-radius: 11px;
+            background: rgba(255,255,255,.045);
+        }
+        .log-btn { min-height: 48px; border-radius: 12px; }
+        .timer-num { font-size: clamp(4.5rem, 9vw, 7rem); line-height: 1.1; }
+        .timer-btns button { min-height: 48px; border-radius: 12px; }
+
+        .nutrition-view {
+            max-width: none;
+            margin: 0;
+            animation: hero-arrive .45s ease both;
+        }
+        .nutrition-hero {
+            min-height: 190px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            text-align: left;
+            background:
+                radial-gradient(ellipse at 92% 20%, rgba(69,224,208,.12), transparent 20rem),
+                linear-gradient(115deg, rgba(24,34,32,.98), rgba(15,20,22,.96));
+        }
+        .nutrition-hero-icon { font-size: 1.7rem; text-align: left; }
+        .nutrition-hero h2 { font-size: clamp(2rem,4vw,3rem); }
+        .nutrition-hero p { max-width: 600px; }
+        .diet-plan-card, .product-links-card { padding: clamp(20px, 3vw, 32px); }
+        .diet-field input, .diet-field select { min-height: 46px; border-radius: 11px; }
+        .diet-submit, .diet-print-button { min-height: 48px; border-radius: 12px; }
+        .product-link { min-height: 52px; border-radius: 11px; }
+        .memory-dashboard {
+            max-width: none;
+            margin-top: 0;
+            border: 1px solid rgba(224,238,230,.11);
+            border-top: 1px solid rgba(224,238,230,.11);
+            border-radius: var(--radius-md);
+            background: rgba(17,23,25,.86);
+            box-shadow: none;
+        }
+        .memory-header, .memory-body { padding: 18px 22px; }
+        .memory-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .mem-stat { min-height: 86px; border-radius: 12px; background: rgba(255,255,255,.035); }
+        .disclaimer { max-width: 760px; align-self: center; margin: -8px 0 0; color: #9aa8a5; }
+        .main-container > * { animation: hero-arrive .55s cubic-bezier(.2,.8,.2,1) both; }
+        .main-container > *:nth-child(2) { animation-delay: .06s; }
+        .main-container > *:nth-child(3) { animation-delay: .12s; }
+        .main-container > *:nth-child(4) { animation-delay: .18s; }
+        @keyframes hero-arrive {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        button, a, input, select { transition-duration: .2s; }
+        :focus-visible { outline: 2px solid var(--volt); outline-offset: 3px; }
+
+        @media (max-width: 900px) {
+            nav { padding-right: 20px; padding-left: 20px; }
+            .voice-card { grid-template-columns: minmax(270px, .8fr) minmax(0, 1.2fr); }
+            .memory-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 680px) {
+            nav { position: relative; flex-direction: column; align-items: stretch; gap: 13px; padding: 14px 16px; }
+            .wordmark { align-self: flex-start; }
+            .mode-pills { width: 100%; justify-content: stretch; }
+            .pill-btn { flex: 1; justify-content: center; min-width: 0; padding: 8px 7px; font-size: .67rem; }
+            .main-container { width: min(100% - 28px, 1280px); gap: 15px; padding: 20px 0 42px; }
+            .experience-hero { min-height: 0; align-items: flex-start; padding: 22px 20px; }
+            .experience-hero h1 { font-size: clamp(2.1rem, 12vw, 3.2rem); }
+            .experience-hero p { max-width: 36ch; font-size: .82rem; }
+            .hero-side-note { display: none; }
+            .voice-card { display: grid; grid-template-columns: minmax(0,1fr); grid-template-rows: auto auto auto minmax(140px,auto) auto; min-height: 0; }
+            .card-header { grid-column: 1; grid-row: 1; padding: 14px 16px; }
+            .avatar-stage { grid-column: 1; grid-row: 2; min-height: 340px; padding: 20px 16px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+            .avatar-stage::before { width: 260px; height: 260px; }
+            .avatar-stage::after { top: 16px; left: 18px; }
+            .siri-orb-container { width: 190px; height: 190px; margin-top: 18px; }
+            .quick-cues { grid-column: 1; grid-row: 3; padding: 16px 16px 12px; }
+            .cue-chip { min-height: 44px; }
+            .conversation-panel { grid-column: 1; grid-row: 4; min-height: 150px; max-height: 280px; margin: 0 16px; padding: 14px 2px; }
+            .bottom-action-bar { grid-column: 1; grid-row: 5; padding: 14px 16px 18px; }
+            .tools-view { grid-template-columns: minmax(0,1fr); gap: 14px; }
+            .nutrition-hero { min-height: 160px; padding: 22px; }
+            .diet-form-grid, .product-link-grid { grid-template-columns: minmax(0,1fr); }
+            .diet-field.full-width { grid-column: auto; }
+            .memory-body { padding: 15px; }
+            .memory-stats { gap: 8px; }
+            .mem-actions { flex-direction: column; }
+            .field-row { flex-direction: column; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -1050,6 +1668,18 @@
 </nav>
 
 <div class="main-container">
+    <section class="experience-hero" aria-labelledby="experienceTitle">
+        <div class="hero-copy">
+            <span class="hero-eyebrow">Your training, in the moment</span>
+            <h1 id="experienceTitle">Built for your<br><span>next rep.</span></h1>
+            <p>A focused coach for your training floor. Get a cue, log a set, and get back to work.</p>
+        </div>
+        <div class="hero-side-note" aria-label="Spotter features">
+            <strong>YOUR POCKET TRAINING PARTNER</strong>
+            <span class="hero-note-live">● Voice + text coaching</span>
+            <span>Workout tools · Nutrition ideas</span>
+        </div>
+    </section>
 
     <!-- ──────────────────────────────────────────────────────────
          VOICE ASSISTANT CARD
@@ -1066,11 +1696,11 @@
 
         <!-- Siri Fluid Avatar Stage -->
         <div class="avatar-stage">
-            <div class="siri-orb-container" id="orbClickTarget" title="Click to talk or interrupt">
+            <button class="siri-orb-container" id="orbClickTarget" type="button" title="Click to start or stop voice, or interrupt a reply" aria-label="Start or stop voice assistant, or interrupt spoken reply" aria-pressed="false">
                 <div class="siri-glow"></div>
                 <div class="siri-orb" id="siriOrb"></div>
                 <div class="siri-ring"></div>
-            </div>
+            </button>
 
             <div class="waveform" id="waveform">
                 <div class="waveform-bar"></div>
@@ -1084,6 +1714,14 @@
 
             <div class="status-heading" id="statusHeading">Tap "Start Voice Assistant"</div>
             <div class="status-sub" id="statusSub">Hands-free voice coaching • Speaks back out loud</div>
+            <button class="voice-interrupt" id="interruptSpeechButton" type="button" hidden>Stop speaking</button>
+            <label class="voice-language-control" for="voiceLanguage">
+                Voice language
+                <select id="voiceLanguage">
+                    <option value="en-IN">English (India)</option>
+                    <option value="hi-IN">हिन्दी</option>
+                </select>
+            </label>
         </div>
 
         <!-- Live Quick Suggestions -->
@@ -1183,92 +1821,109 @@
 
         <div class="nutrition-hero">
             <div class="nutrition-hero-icon">🥗</div>
-            <h2>Fuel Your Performance</h2>
-            <p>Smart diet, nutrition & supplement guidance to power every rep</p>
+            <h2>Weekly Meal-Idea Draft</h2>
+            <p>Build a general adult meal-plan draft to discuss with your physician or registered dietitian</p>
         </div>
 
-        <div class="nutrition-grid">
+        <div class="nutrition-card diet-plan-card">
+            <h3>Personalize your draft</h3>
+            <p class="diet-plan-intro">Your age, height, weight, activity, and food preferences are used only for this request. Spotter does not save these details; the configured AI provider may process them under its own data policy. Continue only if you consent.</p>
+            <p class="diet-plan-warning">This is not a medical diet or a physician-approved plan. Do not use this general draft if you are under 19, pregnant, have a medical condition or food allergy, have an active or past eating disorder, or follow clinician-prescribed dietary restrictions. Ask your clinician or registered dietitian instead. Food exclusions are preferences only and cannot make meals allergy-safe.</p>
 
-            <div class="nutrition-card">
-                <div class="nutrition-card-header">
-                    <div class="nutrition-card-icon diet">🍽️</div>
-                    <h3>Diet Basics</h3>
+            <form id="dietPlanForm">
+                <div class="diet-form-grid">
+                    <div class="diet-field">
+                        <label for="dietAge">Age (19+)</label>
+                        <input id="dietAge" name="age" type="number" min="19" max="100" step="1" required>
+                    </div>
+                    <div class="diet-field">
+                        <label for="dietWeight">Weight (kg)</label>
+                        <input id="dietWeight" name="weightKg" type="number" min="20" max="350" step="0.1" required>
+                    </div>
+                    <div class="diet-field">
+                        <label for="dietHeight">Height (cm)</label>
+                        <input id="dietHeight" name="heightCm" type="number" min="100" max="250" step="0.1" required>
+                    </div>
+                    <div class="diet-field">
+                        <label for="dietActivity">Usual activity</label>
+                        <select id="dietActivity" name="activityLevel" required>
+                            <option value="low">Mostly seated / light activity</option>
+                            <option value="light">Light activity</option>
+                            <option value="moderate">Moderate activity</option>
+                            <option value="high">High activity</option>
+                        </select>
+                    </div>
+                    <div class="diet-field">
+                        <label for="dietPattern">Eating pattern</label>
+                        <select id="dietPattern" name="eatingPattern" required>
+                            <option value="omnivore">Includes meat and plants</option>
+                            <option value="vegetarian">Vegetarian</option>
+                            <option value="vegan">Vegan</option>
+                            <option value="pescatarian">Pescatarian</option>
+                        </select>
+                    </div>
+                    <div class="diet-field">
+                        <label for="dietGoal">Meal-planning focus</label>
+                        <select id="dietGoal" name="goal" required>
+                            <option value="balanced">Balanced everyday meals</option>
+                            <option value="training">Training-day meal ideas</option>
+                            <option value="weight-management">General weight-management meal ideas</option>
+                        </select>
+                    </div>
+                    <div class="diet-field full-width">
+                        <label for="dietAvoid">Foods to avoid by preference (not for allergy safety)</label>
+                        <input id="dietAvoid" name="foodsToAvoid" type="text" maxlength="200" placeholder="Optional, comma-separated">
+                    </div>
                 </div>
-                <ul>
-                    <li>Eat whole foods — lean protein, complex carbs, healthy fats</li>
-                    <li>Time carbs around workouts for energy & recovery</li>
-                    <li>Prioritize 7–9 hrs sleep — recovery starts in the kitchen</li>
-                </ul>
-            </div>
+                <label class="diet-consent">
+                    <input id="dietHealthConfirm" name="healthyAdultConfirmed" type="checkbox" required>
+                    <span>I am 19 or older and none of the medical or allergy situations listed above apply to me.</span>
+                </label>
+                <label class="diet-consent">
+                    <input id="dietProviderConsent" name="externalProcessingConfirmed" type="checkbox" required>
+                    <span>I consent to sending these details to the configured AI provider for this request. Spotter will not save them to my profile.</span>
+                </label>
+                <button class="diet-submit" id="dietGenerateButton" type="submit">Create 7-day draft</button>
+                <button class="diet-reset-button" type="reset">Clear details</button>
+                <p class="diet-status" id="dietPlanStatus" role="status" aria-live="polite"></p>
+            </form>
 
-            <div class="nutrition-card">
-                <div class="nutrition-card-header">
-                    <div class="nutrition-card-icon macros">📊</div>
-                    <h3>Macros Guide</h3>
-                </div>
-                <div class="macro-pills">
-                    <span class="macro-pill protein">Protein 1.6–2.2g/kg</span>
-                    <span class="macro-pill carbs">Carbs 3–5g/kg</span>
-                    <span class="macro-pill fats">Fats 0.8–1g/kg</span>
-                </div>
-                <ul style="margin-top:10px">
-                    <li>Adjust based on goals — cut, maintain, or bulk</li>
-                    <li>Track for 2 weeks, then eat intuitively</li>
-                </ul>
-            </div>
-
-            <div class="nutrition-card">
-                <div class="nutrition-card-header">
-                    <div class="nutrition-card-icon hydration">💧</div>
-                    <h3>Hydration</h3>
-                </div>
-                <ul>
-                    <li>Drink 2.5–3.5 L water daily (more on training days)</li>
-                    <li>Add electrolytes during intense or long sessions</li>
-                    <li>Check urine color — pale yellow is the goal</li>
-                </ul>
-            </div>
-
-            <div class="nutrition-card">
-                <div class="nutrition-card-header">
-                    <div class="nutrition-card-icon supps">💊</div>
-                    <h3>Supplements</h3>
-                </div>
-                <ul>
-                    <li><strong style="color:var(--text)">Whey/Plant Protein</strong> — hit daily protein targets</li>
-                    <li><strong style="color:var(--text)">Creatine Monohydrate</strong> — 3–5g daily, well-researched</li>
-                    <li><strong style="color:var(--text)">Vitamin D + Omega-3</strong> — support recovery & joints</li>
-                    <li><strong style="color:var(--text)">Caffeine</strong> — pre-workout boost when needed</li>
-                </ul>
-            </div>
-
-            <div class="nutrition-card span-full">
-                <div class="nutrition-card-header">
-                    <div class="nutrition-card-icon diet">⚡</div>
-                    <h3>Meal Timing Tips</h3>
-                </div>
-                <ul>
-                    <li><strong style="color:var(--text)">Pre-workout (1–2 hrs):</strong> carbs + moderate protein — banana & Greek yogurt, oats & whey</li>
-                    <li><strong style="color:var(--text)">Post-workout (within 2 hrs):</strong> protein + fast carbs — chicken & rice, protein shake & fruit</li>
-                    <li><strong style="color:var(--text)">Rest days:</strong> slightly lower carbs, keep protein high for muscle repair</li>
-                </ul>
-            </div>
-
+            <section class="diet-result" id="dietPlanResult" hidden>
+                <h3>Your draft — review with your clinician</h3>
+                <p class="diet-profile-summary" id="dietProfileSummary"></p>
+                <div id="dietPlanText" class="formatted-content"></div>
+                <p class="diet-plan-intro">Meal ideas are AI-generated and are not nutrient-verified or clinically reviewed. Confirm portions, nutrition needs, and suitability with your physician or registered dietitian.</p>
+                <button class="diet-print-button" id="dietPrintButton" type="button">Print / Save as PDF</button>
+            </section>
         </div>
 
-        <a class="shop-cta" href="https://www.amazon.in/s?k=whey+protein" target="_blank" rel="noopener noreferrer">
-            <div class="shop-cta-text">
-                <h4>Shop Protein & Supplements</h4>
-                <p>Curated picks for whey protein, creatine, vitamins & more — shipped fast.</p>
+        <div class="nutrition-card product-links-card">
+            <div class="nutrition-card-header">
+                <div class="nutrition-card-icon supps">🛒</div>
+                <h3>Protein & Supplement Options</h3>
             </div>
-            <span class="shop-cta-btn">
-                Visit Store
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-            </span>
-        </a>
+            <p>Amazon search links—not endorsements. Compare ingredients, serving sizes, sellers, and current prices. Choose based on your preferences; supplements are optional.</p>
+            <div class="product-link-grid">
+                <a class="product-link" href="https://www.amazon.in/s?k=Optimum+Nutrition+Gold+Standard+100%25+Whey" target="_blank" rel="noopener noreferrer">
+                    <span>Gold Standard Whey product search</span><span>Amazon ↗</span>
+                </a>
+                <a class="product-link" href="https://www.amazon.in/s?k=whey+protein+powder" target="_blank" rel="noopener noreferrer">
+                    <span>Whey protein powders</span><span>Amazon ↗</span>
+                </a>
+                <a class="product-link" href="https://www.amazon.in/s?k=plant+based+protein+powder" target="_blank" rel="noopener noreferrer">
+                    <span>Plant-based protein powders</span><span>Amazon ↗</span>
+                </a>
+                <a class="product-link" href="https://www.amazon.in/s?k=creatine+monohydrate" target="_blank" rel="noopener noreferrer">
+                    <span>Creatine monohydrate options</span><span>Amazon ↗</span>
+                </a>
+                <a class="product-link" href="https://www.amazon.in/s?k=sports+nutrition+supplements" target="_blank" rel="noopener noreferrer">
+                    <span>All sports supplements</span><span>Amazon ↗</span>
+                </a>
+            </div>
+        </div>
 
         <p class="nutrition-voice-hint">
-            Want personalized advice? Switch to <span onclick="setAppMode('voice')">Voice Avatar</span> and ask about your diet, macros, or supplements.
+            General adult protein reference: <strong>0.8 g/kg/day</strong> is the RDA for healthy adults—not a personalized target. See the <a href="https://www.nationalacademies.org/projects/HMD-FNB-18-P-119/publication/10490" target="_blank" rel="noopener noreferrer">National Academies Dietary Reference Intakes</a>. Individual needs can differ; ask your clinician.
         </p>
 
     </div>
@@ -1321,6 +1976,18 @@
 
 </div>
 
+<section id="dietPrintView" aria-hidden="true">
+    <h1>Spotter — Weekly Meal-Idea Draft</h1>
+    <p><strong>General educational draft only. Not medical advice, nutrient-verified, or physician-approved.</strong></p>
+    <p id="dietPrintMeta"></p>
+    <div id="dietPrintPlan" class="formatted-content"></div>
+    <h2>Protein reference</h2>
+    <p id="dietPrintProteinReference"></p>
+    <p>Source: <a href="https://www.nationalacademies.org/projects/HMD-FNB-18-P-119/publication/10490">National Academies, Dietary Reference Intakes for Protein and Amino Acids</a>. This adult reference is not an individualized recommendation; medical conditions, life stage, activity, and other factors can change needs.</p>
+    <h2>Clinician review</h2>
+    <p>Review this draft with a physician or registered dietitian before following it. This plan has not been reviewed or approved by a clinician. Verify all ingredients and labels; this draft cannot assess allergies or cross-contact risk.</p>
+</section>
+
 <script>
 // ──────────────────────────────────────────────────────────────────────────────
 // STATE & DOM ELEMENTS
@@ -1334,6 +2001,8 @@ const conversationPanel = document.getElementById('conversationPanel');
 const toggleBtn         = document.getElementById('toggleBtn');
 const toggleBtnText     = document.getElementById('toggleBtnText');
 const orbClickTarget    = document.getElementById('orbClickTarget');
+const interruptSpeechButton = document.getElementById('interruptSpeechButton');
+const voiceLanguageSelect = document.getElementById('voiceLanguage');
 const chatTextInput     = document.getElementById('chatTextInput');
 const serverBanner      = document.getElementById('serverBanner');
 
@@ -1341,15 +2010,17 @@ let isSessionActive = false;
 let isRecognizing   = false;
 let isSpeaking      = false;
 let isProcessing    = false;
-let mediaStream     = null;
 let recognition     = null;
 let audioCtx        = null;
+let recognitionRetryCount = 0;
+let networkRetryCount = 0;
+let restartTimer = null;
 
 // Multi-turn conversation context for Spotter
 let chatHistory = [
     {
         role: "system",
-        content: "You are Spotter, an elite, motivational, and energetic AI personal coach and training partner. You talk directly out loud to the user during workouts. You also give practical diet, nutrition, and supplement advice (protein intake, meal timing, creatine, hydration, etc.). Keep all responses concise, punchy, and conversational (1 to 2 sentences max). NEVER use markdown asterisks (*smiles* or *nods*), bullet points, or lists. Speak naturally, warmly, and with actionable training and nutrition advice."
+        content: "You are Spotter, a supportive fitness coach. Be very concise. For a simple question, answer in 1 or 2 short sentences. For a multi-part question, use at most 4 short bullet points, one sentence per bullet, with a brief bold label when useful. Answer only what was asked; no long introductions, repeated conclusions, filler, or paragraphs. Use plain language. For nutrition, do not invent calorie or nutrient targets unless specifically asked; general nutrition information is not medical advice. Do not diagnose, prescribe a medical diet, or claim physician approval. For medical conditions, injury, pregnancy, eating disorders, allergies, or clinician-directed diets, recommend a qualified clinician. When asked for protein powder or supplement ideas, match suggestions only to preferences and budget the user actually provided; never claim an item is medically best, necessary, independently verified, or allergy-safe. If they have not shared dietary preference, ask briefly or show both dairy and plant-based options without choosing a winner. Include the relevant Amazon.in search link(s) below as Markdown links, and clearly say these are search results where prices, stock, and sellers vary. Approved links: [Optimum Nutrition Gold Standard Whey product search](https://www.amazon.in/s?k=Optimum+Nutrition+Gold+Standard+100%25+Whey), [Whey protein powder options](https://www.amazon.in/s?k=whey+protein+powder), [Plant-based protein powder options](https://www.amazon.in/s?k=plant+based+protein+powder), [Creatine monohydrate options](https://www.amazon.in/s?k=creatine+monohydrate), [All supplements](https://www.amazon.in/s?k=sports+nutrition+supplements). For supplements, advise checking labels and consulting a clinician or pharmacist if they have a medical condition, take medication, or are unsure."
     }
 ];
 
@@ -1395,8 +2066,8 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 if (SpeechRecognition) {
     recognition = new SpeechRecognition();
     recognition.continuous = false; // Managed in tight restart cycle for cross-browser stability
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.lang = voiceLanguageSelect.value;
 
     recognition.onstart = () => {
         isRecognizing = true;
@@ -1407,25 +2078,46 @@ if (SpeechRecognition) {
 
     recognition.onresult = async (event) => {
         isRecognizing = false;
-        const transcript = event.results[0][0].transcript.trim();
+        const transcript = Array.from(event.results)
+            .slice(event.resultIndex)
+            .filter(result => result.isFinal)
+            .map(result => result[0].transcript)
+            .join(' ')
+            .trim();
         if (transcript.length > 0) {
+            recognitionRetryCount = 0;
+            networkRetryCount = 0;
             playTone('heard');
             addMessage(transcript, 'user');
             await processVoiceQuery(transcript);
-        } else {
-            restartListeningCycle();
         }
     };
 
     recognition.onerror = (event) => {
         isRecognizing = false;
-        if (event.error === 'no-speech' || event.error === 'aborted') {
-            restartListeningCycle();
-        } else if (event.error === 'not-allowed') {
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
             stopVoiceSession();
             setOrbState('idle', 'Mic access denied', 'Please allow microphone permissions in browser settings');
+        } else if (event.error === 'audio-capture') {
+            stopVoiceSession();
+            setOrbState('idle', 'Microphone unavailable', 'Check that your microphone is connected and not being blocked');
+        } else if (event.error === 'network') {
+            networkRetryCount += 1;
+            if (networkRetryCount >= 5) {
+                stopVoiceSession();
+                setOrbState('idle', 'Voice service unavailable', 'Check your connection, tap Start to retry, or use the text input');
+                return;
+            }
+            const delay = Math.min(500 * (2 ** (networkRetryCount - 1)), 5000);
+            setOrbState('idle', 'Reconnecting voice service…', 'Speech service is unavailable; retrying automatically');
+            restartListeningCycle(delay);
         } else {
-            restartListeningCycle();
+            if (event.error !== 'no-speech' && event.error !== 'aborted') {
+                console.warn('Speech recognition error:', event.error);
+            }
+            const delay = Math.min(500 * (2 ** recognitionRetryCount), 5000);
+            recognitionRetryCount += 1;
+            restartListeningCycle(delay);
         }
     };
 
@@ -1437,20 +2129,26 @@ if (SpeechRecognition) {
     };
 } else {
     toggleBtn.disabled = true;
-    setOrbState('idle', 'Browser Unsupported', 'Use Google Chrome or Microsoft Edge for voice support');
+    orbClickTarget.disabled = true;
+    setOrbState('idle', 'Voice input unavailable', 'Use a supported browser on HTTPS, or type your question below');
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // HANDS-FREE VOICE LIFECYCLE
 // ──────────────────────────────────────────────────────────────────────────────
 async function startVoiceSession() {
-    try {
-        // Pre-acquire stream so browser asks once and never again
-        if (!mediaStream && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        }
+    if (!recognition) {
+        setOrbState('idle', 'Voice input unavailable', 'Use a supported browser or type your question below');
+        return;
+    }
+    if (!window.isSecureContext) {
+        setOrbState('idle', 'Secure connection required', 'Voice input needs HTTPS or localhost. You can still type below.');
+        return;
+    }
 
+    try {
         isSessionActive = true;
+        orbClickTarget.setAttribute('aria-pressed', 'true');
         toggleBtn.className = 'action-button stop';
         toggleBtnText.textContent = 'End Voice Session';
 
@@ -1458,8 +2156,9 @@ async function startVoiceSession() {
         setOrbState('listening', 'Listening… say what you\'re training', 'Hands-free voice coaching active');
         startListening();
     } catch (err) {
-        console.error('Mic access error:', err);
-        setOrbState('idle', 'Microphone Required', 'Tap Start and click "Allow" when prompted.');
+        console.error('Could not start voice recognition:', err);
+        stopVoiceSession();
+        setOrbState('idle', 'Microphone Required', 'Allow microphone access in browser settings, or type your question below.');
     }
 }
 
@@ -1467,12 +2166,15 @@ function stopVoiceSession() {
     isSessionActive = false;
     isSpeaking = false;
     isProcessing = false;
+    clearTimeout(restartTimer);
+    restartTimer = null;
 
     if (synth) synth.cancel();
     if (recognition) {
         try { recognition.stop(); } catch(e) {}
     }
-
+    orbClickTarget.setAttribute('aria-pressed', 'false');
+    interruptSpeechButton.hidden = true;
     toggleBtn.className = 'action-button start';
     toggleBtnText.textContent = 'Start Voice Assistant';
     setOrbState('idle', 'Spotter Paused', 'Tap to resume continuous hands-free coaching');
@@ -1482,31 +2184,59 @@ function startListening() {
     if (!isSessionActive || isSpeaking || isProcessing || isRecognizing) return;
     try {
         recognition.start();
-    } catch (e) {}
+    } catch (error) {
+        if (error.name !== 'InvalidStateError') {
+            console.error('Could not start speech recognition:', error);
+            stopVoiceSession();
+            setOrbState('idle', 'Voice recognition unavailable', 'Try again or use the text input below');
+        }
+    }
 }
 
-function restartListeningCycle() {
-    if (!isSessionActive || isSpeaking || isProcessing) return;
-    setTimeout(() => {
+function restartListeningCycle(delay = 250) {
+    if (!isSessionActive || isSpeaking || isProcessing || restartTimer) return;
+    restartTimer = setTimeout(() => {
+        restartTimer = null;
         if (isSessionActive && !isSpeaking && !isProcessing && !isRecognizing) {
             startListening();
         }
-    }, 250);
+    }, delay);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // AI QUERY PROCESSING (NVIDIA NIM + Smart Offline Fallback)
 // ──────────────────────────────────────────────────────────────────────────────
 async function processVoiceQuery(userText) {
+    if (isProcessing) return;
     isProcessing = true;
     setOrbState('thinking', 'Spotter is thinking…', 'Analyzing your question');
 
-    // Handle voice timer commands locally for instant response
     const lower = userText.toLowerCase();
     if (lower.includes('timer') || lower.includes('rest')) {
-        if (lower.includes('start') || lower.includes('begin') || lower.includes('set')) {
-            startRestTimerWithSeconds(90);
-            const reply = "Rest timer started for 90 seconds. Catch your breath and shake out your arms.";
+        if (/\b(stop|pause)\b/.test(lower) && timerId) {
+            toggleTimer();
+            const reply = 'Rest timer paused.';
+            addMessage(reply, 'ai');
+            isProcessing = false;
+            speakResponse(reply);
+            return;
+        }
+        if (/\b(reset|restart)\b/.test(lower)) {
+            resetTimer();
+            const reply = 'Rest timer reset to 90 seconds.';
+            addMessage(reply, 'ai');
+            isProcessing = false;
+            speakResponse(reply);
+            return;
+        }
+        if (/\b(start|begin|set)\b/.test(lower)) {
+            const durationMatch = lower.match(/\b(\d+)\s*(seconds?|secs?|minutes?|mins?)\b/);
+            const requestedDuration = durationMatch
+                ? Number(durationMatch[1]) * (/^min/.test(durationMatch[2]) ? 60 : 1)
+                : 90;
+            const duration = Math.max(1, Math.min(requestedDuration, 3600));
+            startRestTimerWithSeconds(duration);
+            const reply = `Rest timer started for ${duration} seconds.`;
             addMessage(reply, 'ai');
             isProcessing = false;
             speakResponse(reply);
@@ -1515,6 +2245,9 @@ async function processVoiceQuery(userText) {
     }
 
     chatHistory.push({ role: 'user', content: userText });
+    const recentMessages = chatHistory.slice(1).slice(-10);
+    while (recentMessages.length && recentMessages[0].role !== 'user') recentMessages.shift();
+    chatHistory = [chatHistory[0], ...recentMessages];
 
     let replyText = null;
 
@@ -1526,8 +2259,8 @@ async function processVoiceQuery(userText) {
             body: JSON.stringify({
                 model: "nvidia/nemotron-3-ultra-550b-a55b",
                 messages: chatHistory,
-                max_tokens: 200,
-                temperature: 0.65
+                max_tokens: 240,
+                temperature: 0.45
             })
         });
 
@@ -1600,24 +2333,38 @@ function speakResponse(text) {
     }
 
     synth.cancel(); // Stop any pending utterances
-    const utterance = new SpeechSynthesisUtterance(text);
+    const speakableText = text
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/\[([^\]]+)\]\(https:\/\/[^)\s]+\)/g, '$1')
+        .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+        .replace(/^\s*[-*•]\s+/gm, '')
+        .replace(/[*_`>|]/g, '')
+        .replace(/\n+/g, '. ')
+        .trim();
+    const utterance = new SpeechSynthesisUtterance(speakableText);
     utterance.rate = 1.05;
     utterance.pitch = 1.02;
 
     // Pick the most natural, human-sounding voice available
     const voices = synth.getVoices();
-    const bestVoice = voices.find(v => /samantha|karen|victoria|moira|google us english|google uk english female|natural|daniel/i.test(v.name))
+    const preferredLanguage = voiceLanguageSelect.value.toLowerCase();
+    const languageVoice = voices.find(v => v.lang.toLowerCase() === preferredLanguage)
+                       || voices.find(v => v.lang.toLowerCase().startsWith(preferredLanguage.split('-')[0] + '-'));
+    const bestVoice = languageVoice
+                   || voices.find(v => /samantha|karen|victoria|moira|google us english|google uk english female|natural|daniel/i.test(v.name))
                    || voices.find(v => /en[-_]US|en[-_]GB/i.test(v.lang))
                    || voices[0];
     if (bestVoice) utterance.voice = bestVoice;
 
     utterance.onstart = () => {
         isSpeaking = true;
+        interruptSpeechButton.hidden = false;
         setOrbState('speaking', 'Spotter coaching…', 'Tap orb anytime to interrupt or speak');
     };
 
     utterance.onend = utterance.onerror = () => {
         isSpeaking = false;
+        interruptSpeechButton.hidden = true;
         if (isSessionActive) {
             setOrbState('listening', 'Listening… what\'s next?', 'Hands-free loop active');
             restartListeningCycle();
@@ -1648,22 +2395,113 @@ function setOrbState(state, heading, sub) {
     statusSub.textContent = sub;
 }
 
+function interruptSpeech() {
+    if (!synth || !isSpeaking) return;
+    synth.cancel();
+    isSpeaking = false;
+    interruptSpeechButton.hidden = true;
+    if (isSessionActive) {
+        setOrbState('listening', 'Listening… what\'s next?', 'Hands-free loop active');
+        restartListeningCycle();
+    } else {
+        setOrbState('idle', 'Session paused', 'Tap Start to talk again');
+    }
+}
+
 function addMessage(text, sender) {
     const bubble = document.createElement('div');
     bubble.className = `msg-bubble ${sender}`;
-    bubble.textContent = text;
+    renderFormattedText(bubble, text);
     conversationPanel.appendChild(bubble);
     conversationPanel.scrollTop = conversationPanel.scrollHeight;
 }
 
-function speakQuickCue(text) {
-    if (!isSessionActive) {
-        startVoiceSession();
+function renderFormattedText(container, text) {
+    container.textContent = '';
+    let activeList = null;
+    let activeListType = null;
+    let paragraphLines = [];
+
+    function appendInlineText(parent, line) {
+        const parts = line.split(/(\[[^\]]+\]\(https:\/\/[^)\s]+\)|\*\*[^*]+\*\*|__[^_]+__)/g);
+        for (const part of parts) {
+            const linkMatch = part.match(/^\[([^\]]+)\]\((https:\/\/[^)\s]+)\)$/);
+            if (linkMatch) {
+                try {
+                    const url = new URL(linkMatch[2]);
+                    if (url.hostname === 'amazon.in' || url.hostname === 'www.amazon.in') {
+                        const link = document.createElement('a');
+                        link.href = url.href;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.textContent = linkMatch[1];
+                        parent.appendChild(link);
+                    } else {
+                        parent.appendChild(document.createTextNode(linkMatch[1]));
+                    }
+                } catch (error) {
+                    parent.appendChild(document.createTextNode(linkMatch[1]));
+                }
+            } else if ((part.startsWith('**') && part.endsWith('**')) ||
+                (part.startsWith('__') && part.endsWith('__'))) {
+                const strong = document.createElement('strong');
+                strong.textContent = part.slice(2, -2);
+                parent.appendChild(strong);
+            } else if (part) {
+                parent.appendChild(document.createTextNode(part));
+            }
+        }
     }
-    setTimeout(() => {
-        addMessage(text, 'user');
-        processVoiceQuery(text);
-    }, 200);
+
+    function flushParagraph() {
+        if (!paragraphLines.length) return;
+        const paragraph = document.createElement('p');
+        appendInlineText(paragraph, paragraphLines.join(' '));
+        container.appendChild(paragraph);
+        paragraphLines = [];
+    }
+
+    function closeList() {
+        activeList = null;
+        activeListType = null;
+    }
+
+    for (const rawLine of String(text).split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line) {
+            flushParagraph();
+            closeList();
+            continue;
+        }
+
+        const bullet = line.match(/^[-*•]\s+(.+)/);
+        const numbered = line.match(/^\d+[.)]\s+(.+)/);
+        const item = bullet || numbered;
+        if (item) {
+            flushParagraph();
+            const listType = numbered ? 'ol' : 'ul';
+            if (activeListType !== listType) {
+                closeList();
+                activeList = document.createElement(listType);
+                container.appendChild(activeList);
+                activeListType = listType;
+            }
+            const listItem = document.createElement('li');
+            appendInlineText(listItem, item[1]);
+            activeList.appendChild(listItem);
+            continue;
+        }
+
+        closeList();
+        paragraphLines.push(line.replace(/^#{1,6}\s+/, ''));
+    }
+
+    flushParagraph();
+}
+
+function speakQuickCue(text) {
+    addMessage(text, 'user');
+    processVoiceQuery(text);
 }
 
 function sendTextMessage() {
@@ -1673,6 +2511,85 @@ function sendTextMessage() {
     addMessage(text, 'user');
     processVoiceQuery(text);
 }
+
+const dietPlanForm = document.getElementById('dietPlanForm');
+const dietPlanStatus = document.getElementById('dietPlanStatus');
+const dietGenerateButton = document.getElementById('dietGenerateButton');
+const dietPlanResult = document.getElementById('dietPlanResult');
+const dietPlanText = document.getElementById('dietPlanText');
+const dietProfileSummary = document.getElementById('dietProfileSummary');
+
+dietPlanForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!dietPlanForm.reportValidity()) return;
+
+    const formData = new FormData(dietPlanForm);
+    const profile = {
+        age: Number(formData.get('age')),
+        weightKg: Number(formData.get('weightKg')),
+        heightCm: Number(formData.get('heightCm')),
+        activityLevel: formData.get('activityLevel'),
+        eatingPattern: formData.get('eatingPattern'),
+        goal: formData.get('goal'),
+        foodsToAvoid: formData.get('foodsToAvoid'),
+        healthyAdultConfirmed: document.getElementById('dietHealthConfirm').checked,
+        externalProcessingConfirmed: document.getElementById('dietProviderConsent').checked
+    };
+
+    dietGenerateButton.disabled = true;
+    dietPlanStatus.classList.remove('error');
+    dietPlanStatus.textContent = 'Creating your draft. This can take up to a minute…';
+    dietPlanResult.hidden = true;
+    dietPlanForm.setAttribute('aria-busy', 'true');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    try {
+        const response = await fetch('/api/diet-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(profile),
+            signal: controller.signal
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data?.hint || data?.error || `Request failed (HTTP ${response.status})`);
+        }
+
+        const plan = data?.choices?.[0]?.message?.content?.trim();
+        if (!plan) throw new Error('The AI provider returned an empty meal-plan draft. Please try again.');
+
+        renderFormattedText(dietPlanText, plan);
+        const pattern = dietPlanForm.elements.eatingPattern.selectedOptions[0].textContent;
+        const activity = dietPlanForm.elements.activityLevel.selectedOptions[0].textContent;
+        const focus = dietPlanForm.elements.goal.selectedOptions[0].textContent;
+        const summary = `Meal ideas only · Age ${profile.age} · ${profile.weightKg} kg · ${profile.heightCm} cm · ${pattern} · ${activity} · ${focus}`;
+        dietProfileSummary.textContent = summary;
+        document.getElementById('dietPrintMeta').textContent =
+            `${summary} · Generated ${new Date().toLocaleDateString()}`;
+        renderFormattedText(document.getElementById('dietPrintPlan'), plan);
+        document.getElementById('dietPrintProteinReference').textContent =
+            `For most healthy adults, the protein RDA is 0.8 g per kg body weight per day. At the entered weight this arithmetic reference is approximately ${Math.round(profile.weightKg * 0.8)} g/day. This is a population reference only—not a personalized target, and it was not used to prescribe the meals.`;
+        dietPlanResult.hidden = false;
+        dietPlanStatus.textContent = 'Draft ready. Review it with a physician or registered dietitian before following it.';
+    } catch (error) {
+        dietPlanStatus.classList.add('error');
+        dietPlanStatus.textContent = error.name === 'AbortError'
+            ? 'The request timed out. Check your connection and try again.'
+            : error.message || 'Could not create the meal-plan draft.';
+    } finally {
+        clearTimeout(timeoutId);
+        dietGenerateButton.disabled = false;
+        dietPlanForm.removeAttribute('aria-busy');
+    }
+});
+
+document.getElementById('dietPrintButton').addEventListener('click', () => window.print());
+dietPlanForm.addEventListener('reset', () => {
+    dietPlanResult.hidden = true;
+    dietPlanStatus.classList.remove('error');
+    dietPlanStatus.textContent = '';
+});
 
 // ──────────────────────────────────────────────────────────────────────────────
 // EXERCISE FORM & SUPPLEMENT MEDIA CARDS
@@ -1685,11 +2602,11 @@ const EXERCISE_CUES = {
 };
 
 const NUTRITION_CUES = {
-    protein: { title: "Protein Quick Guide", cues: ["Aim for 1.6–2.2g per kg bodyweight daily", "Spread across 3–4 meals, 25–40g per serving", "Whey shake post-workout is a convenient option"] },
-    creatine: { title: "Creatine Basics", cues: ["Take 3–5g creatine monohydrate daily", "Timing doesn't matter — consistency does", "One of the most researched supplements available"] },
-    supplement: { title: "Supplement Stack", cues: ["Protein powder — fill protein gaps", "Creatine — strength & power output", "Vitamin D + Omega-3 — recovery support"] },
-    macro: { title: "Macro Targets", cues: ["Protein: 1.6–2.2g/kg", "Carbs: 3–5g/kg (higher on training days)", "Fats: 0.8–1g/kg for hormones & energy"] },
-    meal: { title: "Meal Timing", cues: ["Pre-workout: carbs + protein 1–2 hrs before", "Post-workout: protein + carbs within 2 hrs", "Stay hydrated — 2.5–3.5L water daily"] }
+    protein: { title: "Protein Reference", cues: ["0.8g/kg/day is the RDA baseline for healthy adults, not a personalized target", "Needs can differ by health, age, activity, and life stage", "Ask a clinician for an individual target"] },
+    creatine: { title: "Supplement Safety", cues: ["Supplements are not necessary for everyone", "Check with a healthcare professional before starting one", "Product quality and personal risks vary"] },
+    supplement: { title: "Supplement Safety", cues: ["Food-first guidance is general, not a prescription", "Ask a clinician or pharmacist about interactions", "Do not use supplements to treat a condition"] },
+    macro: { title: "Nutrition Needs", cues: ["Energy and nutrient needs vary by person", "Avoid applying generic macro targets as a prescription", "Ask a registered dietitian for individualized guidance"] },
+    meal: { title: "Meal Ideas", cues: ["Choose varied foods across food groups", "Meal timing can be adjusted to comfort and routine", "Personal medical needs should guide any diet changes"] }
 };
 
 function checkAndAttachMediaCard(text) {
@@ -1735,7 +2652,7 @@ function setAppMode(mode) {
 
     if (mode === 'voice') {
         pillVoice.classList.add('active');
-        voiceCard.style.display = 'flex';
+        voiceCard.style.display = 'grid';
     } else if (mode === 'tools') {
         pillTools.classList.add('active');
         toolsView.classList.add('active');
@@ -1854,14 +2771,27 @@ toggleBtn.addEventListener('click', () => {
 // Click orb to toggle session or interrupt speech
 orbClickTarget.addEventListener('click', () => {
     if (isSpeaking) {
-        synth.cancel(); // Interrupt speech and start listening
-        isSpeaking = false;
-        startListening();
+        interruptSpeech();
     } else if (!isSessionActive) {
         startVoiceSession();
     } else {
-        startListening();
+        stopVoiceSession();
     }
+});
+
+interruptSpeechButton.addEventListener('click', interruptSpeech);
+voiceLanguageSelect.addEventListener('change', () => {
+    if (!recognition) return;
+    recognition.lang = voiceLanguageSelect.value;
+    recognitionRetryCount = 0;
+    if (isSessionActive && !isRecognizing && !isProcessing && !isSpeaking) {
+        restartListeningCycle(0);
+    } else if (isSessionActive && isRecognizing) {
+        recognition.stop();
+    }
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isSpeaking) interruptSpeech();
 });
 
 // Warm up voices
